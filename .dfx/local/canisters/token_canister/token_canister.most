@@ -1,0 +1,10 @@
+// Version: 1.0.0
+actor {
+  stable var decimals_ : Nat8;
+  stable var fee_ : Nat;
+  stable var minter_ : Principal;
+  stable var name_ : Text;
+  stable var nextTxId : Nat;
+  stable var symbol_ : Text;
+  stable var totalSupply_ : Nat
+};

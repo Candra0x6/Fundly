@@ -1,0 +1,19 @@
+// Version: 1.0.0
+type SessionData =
+  {createdAt : Time; expiresAt : Time; principal : Principal};
+type Time = Int;
+type UserProfile =
+  {
+    createdAt : Time;
+    email : ?Text;
+    lastLogin : ?Time;
+    principal : Principal;
+    roles : [UserRole];
+    username : ?Text
+  };
+type UserRole = {#Admin; #Investor; #MSME; #Verifier};
+actor {
+  stable var adminPrincipal : Principal;
+  stable var sessionsEntries : [(Text, SessionData)];
+  stable var userProfilesEntries : [(Principal, UserProfile)]
+};

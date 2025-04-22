@@ -1,0 +1,158 @@
+type VerifierInfo = 
+ record {
+   active: bool;
+   addedOn: Time;
+   name: text;
+   specialization: vec text;
+   verificationLevel: nat;
+ };
+type VerificationStatus = 
+ variant {
+   PartiallyVerified: vec VerificationField;
+   Rejected: text;
+   UnderReview;
+   Unverified;
+   Verified: VerificationData;
+ };
+type VerificationField = 
+ variant {
+   BusinessRegistration;
+   FinancialRecords;
+   Identity;
+   ImpactCredentials;
+   Other: text;
+ };
+type VerificationData = 
+ record {
+   credentials: opt text;
+   expiryDate: opt Time;
+   verificationDate: Time;
+   verificationLevel: nat;
+   verifiedBy: principal;
+ };
+type UpdateType = 
+ variant {
+   Created;
+   DocumentAdded;
+   DocumentVerified;
+   OwnerChanged;
+   ProfileUpdated;
+   VerificationStatusChanged;
+ };
+type UpdateRecord = 
+ record {
+   details: text;
+   updateTime: Time;
+   updateType: UpdateType;
+   updatedBy: principal;
+ };
+type Time = int;
+type SocialMediaAccount = 
+ record {
+   handle: text;
+   platform: text;
+ };
+type Result_1 = 
+ variant {
+   err: MSMEError;
+   ok: text;
+ };
+type Result = 
+ variant {
+   err: MSMEError;
+   ok;
+ };
+type MSMERegistrationArgs = 
+ record {
+   category: text;
+   contactInfo: ContactInfo;
+   description: text;
+   financialInfo: opt FinancialInfo;
+   location: text;
+   name: text;
+   socialImpactMetrics: vec text;
+ };
+type MSMEError = 
+ variant {
+   AlreadyRegistered;
+   DocumentError;
+   NotFound;
+   OperationFailed: text;
+   Unauthorized;
+   ValidationError;
+   VerificationError;
+ };
+type MSME = 
+ record {
+   category: text;
+   contactInfo: ContactInfo;
+   description: text;
+   documents: vec Document;
+   financialInfo: opt FinancialInfo;
+   id: text;
+   location: text;
+   name: text;
+   owner: principal;
+   registrationDate: Time;
+   socialImpactMetrics: vec text;
+   updateHistory: vec UpdateRecord;
+   verificationStatus: VerificationStatus;
+ };
+type FinancialInfo = 
+ record {
+   annualRevenue: opt nat;
+   employeeCount: opt nat;
+   establishedYear: opt nat;
+   fundingGoal: opt nat;
+   fundingPurpose: opt text;
+   revenueModel: opt text;
+ };
+type DocumentType = 
+ variant {
+   BusinessPlan;
+   BusinessRegistration;
+   FinancialStatement;
+   ImpactReport;
+   Other: text;
+   TaxDocument;
+   TeamProfile;
+ };
+type Document = 
+ record {
+   assetCanisterId: opt text;
+   assetId: opt text;
+   docType: DocumentType;
+   id: text;
+   name: text;
+   uploadDate: Time;
+   verified: bool;
+ };
+type ContactInfo = 
+ record {
+   email: text;
+   phone: opt text;
+   socialMedia: opt vec SocialMediaAccount;
+   website: opt text;
+ };
+service : {
+  addDocument: (text, text, DocumentType, opt text) -> (Result_1);
+  getAllMSMEs: () -> (vec text) query;
+  getAllVerifiers: () -> (vec record {
+                                principal;
+                                VerifierInfo;
+                              }) query;
+  getMSME: (text) -> (opt MSME) query;
+  getMSMEsByCategory: (text) -> (vec text) query;
+  getMSMEsByLocation: (text) -> (vec text) query;
+  getOwnedMSMEs: (principal) -> (vec text) query;
+  registerMSME: (MSMERegistrationArgs) -> (Result_1);
+  registerVerifier: (principal, text, vec text, nat) -> (Result);
+  requestVerification: (text) -> (Result);
+  setAssetCanisterId: (text) -> (Result);
+  setVerificationCanisterId: (text) -> (Result);
+  transferOwnership: (text, principal) -> (Result);
+  updateAdmin: (principal) -> (Result);
+  updateMSMEProfile: (text, opt text, opt text, opt text, opt text,
+   opt ContactInfo, opt FinancialInfo, opt vec text) -> (Result);
+  updateVerificationStatus: (text, VerificationStatus) -> (Result);
+}

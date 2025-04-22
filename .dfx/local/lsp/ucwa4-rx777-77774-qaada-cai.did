@@ -1,0 +1,80 @@
+type TransferError = 
+ variant {
+   CreatedInFuture: record {ledger_time: nat64;};
+   InvalidRecipient;
+   NonExistingTokenId: TokenId;
+   Rejected;
+   TooOld;
+   Unauthorized;
+ };
+type TransferArgs = 
+ record {
+   created_at_time: opt nat64;
+   from_subaccount: opt Subaccount;
+   memo: opt blob;
+   to: Account;
+   token_id: TokenId;
+ };
+type TransactionId = nat;
+type TokenId = nat;
+type Time = int;
+type Subaccount = blob;
+type Result_2 = 
+ variant {
+   err: TransferError;
+   ok: TransactionId;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: TokenId;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+type ICRC7TokenMetadata = 
+ record {
+   description: text;
+   image: opt text;
+   msmeId: text;
+   name: text;
+   revenueShare: nat;
+   royalties: opt nat;
+   symbol: text;
+ };
+type DistributionRecord = 
+ record {
+   amount: nat;
+   msmeId: text;
+   timestamp: Time;
+   tokenId: TokenId;
+ };
+type Account = 
+ record {
+   owner: principal;
+   subaccount: opt Subaccount;
+ };
+service : {
+  getDistributionHistory: (TokenId) -> (vec DistributionRecord) query;
+  getRevenueShare: (TokenId) -> (opt nat) query;
+  getTokensByMSME: (text) -> (vec TokenId) query;
+  getTotalDistributed: (TokenId) -> (nat) query;
+  icrc7_balance_of: (Account) -> (nat) query;
+  icrc7_description: () -> (opt text) query;
+  icrc7_logo: () -> (opt text) query;
+  icrc7_metadata: () -> (vec record {
+                               text;
+                               text;
+                             }) query;
+  icrc7_name: () -> (text) query;
+  icrc7_owner_of: (TokenId) -> (opt Account) query;
+  icrc7_symbol: () -> (text) query;
+  icrc7_token_metadata: (TokenId) -> (opt ICRC7TokenMetadata) query;
+  icrc7_total_supply: () -> (nat) query;
+  icrc7_transfer: (TransferArgs) -> (Result_2);
+  mintRevenueShareNFT: (text, text, text, nat, opt text) -> (Result_1);
+  recordDistribution: (TokenId, nat, text) -> (Result);
+  setCanisterOwner: (principal) -> (Result);
+}

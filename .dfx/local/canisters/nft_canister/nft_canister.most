@@ -1,0 +1,10 @@
+// Version: 1.0.0
+actor {
+  stable var name : Text;
+  stable var nextTokenId : Nat;
+  stable var nextTransactionId : Nat;
+  stable var owner : Principal;
+  stable var symbol : Text;
+  stable var totalMinted : Nat;
+  stable var totalSupply : Nat
+};

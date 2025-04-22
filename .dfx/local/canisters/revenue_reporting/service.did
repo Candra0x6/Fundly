@@ -1,0 +1,59 @@
+type Time = int;
+type Subaccount = blob;
+type RevenueError = 
+ variant {
+   DistributionFailed;
+   MSMENotFound;
+   NoTokensFound;
+   NotFound;
+   TransferError: text;
+   Unauthorized;
+   ValidationError;
+ };
+type Revenue = 
+ record {
+   amount: nat;
+   description: text;
+   distributed: bool;
+   distributionTxs: vec DistributionTx;
+   id: text;
+   msmeId: text;
+   reportDate: Time;
+ };
+type Result_2 = 
+ variant {
+   err: RevenueError;
+   ok: vec DistributionTx;
+ };
+type Result_1 = 
+ variant {
+   err: RevenueError;
+   ok: text;
+ };
+type Result = 
+ variant {
+   err: RevenueError;
+   ok;
+ };
+type DistributionTx = 
+ record {
+   amount: nat;
+   recipient: Account;
+   timestamp: Time;
+   tokenId: nat;
+   txId: opt nat;
+ };
+type Account = 
+ record {
+   owner: principal;
+   subaccount: opt Subaccount;
+ };
+service : {
+  distributeRevenue: (text) -> (Result);
+  getDistributionDetails: (text) -> (Result_2) query;
+  getMSMERevenues: (text) -> (vec text) query;
+  getRevenue: (text) -> (opt Revenue) query;
+  reportRevenue: (text, nat, text) -> (Result_1);
+  setAdminPrincipal: (principal) -> (Result);
+  updateCanisterReferences: (text, text, text) -> (Result);
+}

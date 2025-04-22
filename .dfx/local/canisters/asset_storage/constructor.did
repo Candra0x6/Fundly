@@ -1,0 +1,60 @@
+type Time = int;
+type Result_1 = 
+ variant {
+   err: AssetError;
+   ok: AssetId;
+ };
+type Result = 
+ variant {
+   err: AssetError;
+   ok: ChunkId;
+ };
+type ChunkedAsset = 
+ record {
+   chunkIds: vec ChunkId;
+   contentType: text;
+   createdAt: Time;
+   id: AssetId;
+   owner: principal;
+   relatedEntity: opt record {
+                        entityId: text;
+                        entityType: text;
+                      };
+   totalSize: nat;
+ };
+type ChunkId = nat;
+type AssetId = text;
+type AssetError = 
+ variant {
+   NotFound;
+   StorageFull;
+   Unauthorized;
+   ValidationError;
+ };
+type Asset = 
+ record {
+   contentType: text;
+   createdAt: Time;
+   data: blob;
+   id: text;
+   owner: principal;
+   relatedEntity: opt record {
+                        entityId: text;
+                        entityType: text;
+                      };
+ };
+service : {
+  beginChunkedAsset: (text, nat,
+   opt record {
+         entityId: text;
+         entityType: text;
+       }) -> (Result_1);
+  getAsset: (AssetId) -> (opt Asset) query;
+  getChunk: (ChunkId) -> (opt blob) query;
+  getChunkedAssetInfo: (AssetId) -> (opt ChunkedAsset) query;
+  storeAsset: (text, blob, opt record {
+                                 entityId: text;
+                                 entityType: text;
+                               }) -> (Result_1);
+  uploadChunk: (AssetId, blob) -> (Result);
+}

@@ -1,0 +1,45 @@
+// Version: 1.0.0
+type Document =
+  {
+    documentType : Text;
+    fileUrl : Text;
+    id : Text;
+    name : Text;
+    reviewComments : ?Text;
+    status : DocumentStatus;
+    uploadedAt : Time;
+    uploadedBy : Principal
+  };
+type DocumentStatus = {#Approved; #Pending; #Rejected};
+type MSMEID = Text;
+type MSMEID__1 = MSMEID;
+type Time = Int;
+type VerificationComment =
+  {
+    author : Principal;
+    id : Text;
+    isInternal : Bool;
+    text : Text;
+    timestamp : Time
+  };
+type VerificationOfficer =
+  {addedAt : Time; department : Text; id : Principal; name : Text};
+type VerificationRequest =
+  {
+    assignedTo : ?Principal;
+    comments : [VerificationComment];
+    createdAt : Time;
+    documents : [Document];
+    id : Text;
+    msmeId : MSMEID__1;
+    requiredDocuments : [Text];
+    status : VerificationStatus__1;
+    updatedAt : Time
+  };
+type VerificationStatus__1 =
+  {#Approved; #InReview; #NeedsMoreInfo; #Pending; #Rejected};
+actor {
+  stable var nextRequestId : Nat;
+  stable var verificationOfficersEntries : [(Principal, VerificationOfficer)];
+  stable var verificationRequestsEntries : [(Text, VerificationRequest)]
+};

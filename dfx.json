@@ -1,0 +1,65 @@
+{
+  "canisters": {
+    "nft_canister": {
+      "main": "backend/canisters/nft/main.mo",
+      "type": "motoko",
+      "declarations": {
+        "node_compatibility": true
+      }
+    },
+    "token_canister": {
+      "main": "backend/canisters/token/main.mo",
+      "type": "motoko"
+    },
+    "msme_registration": {
+      "main": "backend/canisters/msme_registration/main.mo",
+      "type": "motoko"
+    },
+    "revenue_reporting": {
+      "main": "backend/canisters/revenue_reporting/main.mo",
+      "type": "motoko"
+    },
+    "asset_storage": {
+      "main": "backend/canisters/asset_storage/main.mo",
+      "type": "motoko"
+    },
+    "authentication": {
+      "main": "backend/canisters/authentication/main.mo",
+      "type": "motoko"
+    },
+    "verification_workflow": {
+      "main": "backend/canisters/verification_workflow/main.mo",
+      "type": "motoko"
+    },
+    "backend": {
+      "main": "backend/app.mo",
+      "type": "motoko",
+      "args": "--enhanced-orthogonal-persistence"
+    },
+    "frontend": {
+      "dependencies": ["backend"],
+      "frontend": {
+        "entrypoint": "frontend/index.html"
+      },
+      "source": ["frontend/dist"],
+      "type": "assets"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "type": "custom",
+      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    }
+  },
+  "output_env_file": ".env",
+  "defaults": {
+    "build": {
+      "packtool": "mops sources"
+    }
+  }
+}
