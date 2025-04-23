@@ -26,8 +26,8 @@ actor Authentication {
     public type UserProfile = {
         principal : Principal;
         roles : [UserRole];
-        username : ?Text;
-        email : ?Text;
+        username : Text;
+        email : Text;
         createdAt : Time.Time;
         lastLogin : ?Time.Time;
     };
@@ -73,24 +73,71 @@ actor Authentication {
     };
 
     // Authentication functions
-    public shared (msg) func registerUser(username : ?Text, email : ?Text, initialRole : UserRole) : async Result.Result<UserProfile, AuthError> {
+    public shared (msg) func registerUser(username : Text, email : Text, initialRole : UserRole) : async Result.Result<UserProfile, AuthError> {
         let caller = msg.caller;
 
         // Don't allow anonymous principals to register
         if (Principal.equal(caller, ANON_PRINCIPAL)) {
             return #err(#NotAuthorized);
         };
+        let profileOpt = userProfiles.get(caller);
 
         // Check if user already exists
-        switch (userProfiles.get(caller)) {
-            case (?profile) {
-                return #err(#AlreadyExists);
+        switch (profileOpt) {
+            case (?existingProfile) {
+                // Check if the principal already exists
+                if (Principal.equal(existingProfile.principal, caller)) {
+                    return #err(#AlreadyExists);
+                } else {
+                    // Continue with profile creation since principal doesn't exist
+                    let roles = switch (initialRole) {
+                        case (#Admin) {
+                            // Check if caller is admin
+                            if (await isAdmin(caller)) {
+                                [initialRole];
+                            } else {
+                                // Default to Investor if not authorized to create admin/verifier
+                                [#Investor];
+                            };
+                        };
+                        case (#Verifier) {
+                            // Check if caller is admin
+                            if (await isAdmin(caller)) {
+                                [initialRole];
+                            } else {
+                                // Default to Investor if not authorized to create admin/verifier
+                                [#Investor];
+                            };
+                        };
+                        case _ { [initialRole] };
+                    };
+
+                    let newProfile : UserProfile = {
+                        principal = caller;
+                        roles = roles;
+                        username = username;
+                        email = email;
+                        createdAt = Time.now();
+                        lastLogin = null;
+                    };
+
+                    userProfiles.put(caller, newProfile);
+                    return #ok(newProfile);
+                };
             };
-            case null {
-                // Create new profile with requested role
-                // Only admin can create admin or verifier roles
+            case (null) {
+                // Handle case where profile doesn't exist at all
                 let roles = switch (initialRole) {
-                    case (#Admin or #Verifier) {
+                    case (#Admin) {
+                        // Check if caller is admin
+                        if (await isAdmin(caller)) {
+                            [initialRole];
+                        } else {
+                            // Default to Investor if not authorized to create admin/verifier
+                            [#Investor];
+                        };
+                    };
+                    case (#Verifier) {
                         // Check if caller is admin
                         if (await isAdmin(caller)) {
                             [initialRole];
@@ -135,7 +182,7 @@ actor Authentication {
         };
     };
 
-    public shared (msg) func updateProfile(username : ?Text, email : ?Text) : async Result.Result<UserProfile, AuthError> {
+    public shared (msg) func updateProfile(username : Text, email : Text) : async Result.Result<UserProfile, AuthError> {
         let caller = msg.caller;
 
         if (Principal.equal(caller, ANON_PRINCIPAL)) {
@@ -163,7 +210,7 @@ actor Authentication {
     };
 
     // Session management
-    public shared (msg) func login() : async Result.Result<Text, AuthError> {
+    public shared (msg) func login(email : Text) : async Result.Result<Text, AuthError> {
         let caller = msg.caller;
 
         if (Principal.equal(caller, ANON_PRINCIPAL)) {
@@ -174,32 +221,25 @@ actor Authentication {
         let profile = switch (userProfiles.get(caller)) {
             case (?existingProfile) {
                 // Update last login time
-                let updatedProfile : UserProfile = {
-                    principal = existingProfile.principal;
-                    roles = existingProfile.roles;
-                    username = existingProfile.username;
-                    email = existingProfile.email;
-                    createdAt = existingProfile.createdAt;
-                    lastLogin = ?Time.now();
+                if (existingProfile.email == email) {
+                    let updatedProfile : UserProfile = {
+                        principal = existingProfile.principal;
+                        roles = existingProfile.roles;
+                        username = existingProfile.username;
+                        email = existingProfile.email;
+                        createdAt = existingProfile.createdAt;
+                        lastLogin = ?Time.now();
+                    }; // This closing brace was missing
+                    userProfiles.put(caller, updatedProfile);
+                    updatedProfile;
+                } else {
+                    return #err(#ProfileNotFound);
                 };
-                userProfiles.put(caller, updatedProfile);
-                updatedProfile;
             };
             case null {
-                // Auto-create profile for new users with Investor role
-                let newProfile : UserProfile = {
-                    principal = caller;
-                    roles = [#Investor];
-                    username = null;
-                    email = null;
-                    createdAt = Time.now();
-                    lastLogin = ?Time.now();
-                };
-                userProfiles.put(caller, newProfile);
-                newProfile;
+                return #err(#ProfileNotFound);
             };
         };
-
         // Create session
         let now = Time.now();
         let sessionId = generateSessionId(caller, now);
@@ -425,8 +465,8 @@ actor Authentication {
                 let newProfile : UserProfile = {
                     principal = newAdmin;
                     roles = [#Admin];
-                    username = null;
-                    email = null;
+                    username = "";
+                    email = "";
                     createdAt = Time.now();
                     lastLogin = null;
                 };
