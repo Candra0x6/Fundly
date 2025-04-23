@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle, Info } from "lucide-react"
 import toast from "react-hot-toast"
+import { UserRole } from "@declarations/authentication/authentication.did"
+import { canisterId, createActor, idlFactory } from "@declarations/authentication"
+import { useAuth } from "@/utility/use-auth-client"
 
 interface RegisterFormProps {
   onSuccess: () => void
@@ -25,6 +28,41 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [principal, setPrincipal] = useState<string | null>(null)
+
+  console.log(name, email)
+
+  const { identity, authActor } = useAuth()
+  const authentication = createActor(canisterId, {
+    agentOptions: {
+      // @ts-ignore
+      identity,
+    },
+    idlFactory: idlFactory
+  })
+  // Sekarang Other_backend pakai identity yang benar
+
+  useEffect(() => {
+    // Check if user is already authenticated with Internet Identity
+    const checkAuthentication = async () => {
+      try {
+        // Try to get the user's profile to check if authenticated
+        const profileResult = await authentication.getMyProfile();
+        if ('ok' in profileResult) {
+          setIsAuthenticated(true);
+          setPrincipal(profileResult.ok.principal.toString());
+          console.log("User is authenticated with principal:", profileResult.ok.principal.toString());
+        } else {
+          console.log("User not authenticated yet or no profile:", profileResult);
+        }
+      } catch (err) {
+        console.warn("Error checking authentication:", err);
+      }
+    };
+
+    checkAuthentication();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,20 +87,46 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      if (role === "msme") {
-        onSuccess()
-        toast.success("Registration successful. As an MSME, you'll need to complete a verification process after registration.")
-        window.location.href = "/msme-verification"
+
+      // Determine user role for registration
+      let userRole: UserRole;
+      if (role === "investor") {
+        userRole = { Investor: null };
       } else {
-        // TODO: Implement Login Inversor role Dashboard
-        toast.success("Registration successful. As an Investor, you'll be able to browse and invest in verified MSMEs.")
-        window.location.href = "/dashboard"
+        userRole = { MSME: null };
       }
+
+      console.log("Registering user with role:", role, "userRole:", userRole);
+      console.log("name:", [name], "email:", [email])
+      // Register the user
+      const registerResult = await authActor?.registerUser(
+        name ? name : "",    // ✅ hanya kirim kalau name ada
+        email ? email : [],  // // Optional email
+        userRole  // Selected role
+      );
+
+      console.log("Registration result:", registerResult);
+
+      if ('err' in registerResult) {
+        throw new Error(`Registration failed: ${JSON.stringify(registerResult.err)}`);
+      }
+
+
+
+      // Show success message and redirect
+      // if (role === "msme") {
+      //   toast.success("Registration successful. As an MSME, you'll need to complete a verification process.");
+      //   window.location.href = "/dashboard/msme";
+      // } else {
+      //   toast.success("Registration successful. Welcome to Fundify!");
+      //   window.location.href = "/dashboard/user";
+      // }
+
+      onSuccess();
     } catch (err) {
-      setError("Registration failed. Please try again.")
+      console.error("Registration/login error:", err);
+      toast.error(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
       setIsLoading(false)
     }
@@ -73,8 +137,18 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold mb-2">Create an account</h1>
         <p className="text-zinc-500">Join Fundify to start investing or raising funds</p>
+        {principal && (
+          <p className="text-xs text-emerald-600 mt-2">
+            Connected as: {principal.substring(0, 10)}...
+          </p>
+        )}
       </div>
 
+      <Button onClick={async () => {
+        console.log(await authentication.getMyProfile())
+      }}>
+        Onsl
+      </Button>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <motion.div
@@ -85,6 +159,13 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
             <span>{error}</span>
           </motion.div>
+        )}
+
+        {!isAuthenticated && (
+          <div className="p-3 rounded-lg bg-yellow-50 text-yellow-600 text-sm flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <span>You must be logged in with Internet Identity to register. We'll attempt to log you in during registration.</span>
+          </div>
         )}
 
         <div className="space-y-2">
@@ -192,9 +273,6 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           )}
         </Button>
       </form>
-
-
-
     </div>
   )
 }

@@ -10,10 +10,10 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { canisterId, createActor } from "../../../src/declarations/backend";
 import { ActorSubclass, Identity } from "@dfinity/agent"; // Tambahan untuk memperjelas tipe actor
 import { Principal } from "@dfinity/principal";
 import toast from "react-hot-toast";
+import { canisterId, createActor } from "@declarations/authentication";
 // Tipe untuk Opsi Auth
 interface AuthOptions {
   createOptions?: AuthClientCreateOptions;
@@ -28,7 +28,7 @@ interface AuthContextType {
   authClient: AuthClient | null;
   identity: Identity | null;
   principal: Principal | null;
-  whoamiActor: ActorSubclass<any> | null;
+  authActor: ActorSubclass<any> | null;
 }
 
 // Tipe untuk provider props
@@ -75,7 +75,7 @@ export const useAuthClient = (
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [principal, setPrincipal] = useState<Principal | null>(null);
-  const [whoamiActor, setWhoamiActor] = useState<ActorSubclass<any> | null>(
+  const [authActor, setAuthActor] = useState<ActorSubclass<any> | null>(
     null
   );
 
@@ -85,7 +85,7 @@ export const useAuthClient = (
     });
   }, []);
 
-  const login = () => {
+  const login = async () => {
     if (!authClient) return;
     authClient.login({
       ...options.loginOptions,
@@ -116,7 +116,8 @@ export const useAuthClient = (
       },
     });
 
-    setWhoamiActor(actor);
+
+    setAuthActor(actor);
 
     if (isAuthenticated) {
       console.log("Login Successful!");
@@ -137,7 +138,7 @@ export const useAuthClient = (
     authClient,
     identity,
     principal,
-    whoamiActor,
+    authActor,
   };
 };
 

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle } from "lucide-react"
+import { useAuth } from "@/utility/use-auth-client"
+import { toast } from "react-hot-toast"
 
 interface LoginFormProps {
   onForgotPassword: () => void
@@ -16,16 +18,16 @@ interface LoginFormProps {
 
 export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const { authActor } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Validate form
-    if (!email || !password) {
+    if (!email) {
       setError("Please fill in all fields")
       return
     }
@@ -34,21 +36,27 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const loginResult = await authActor?.login(email);
+      if ('err' in loginResult) {
+        throw new Error(`Cannot authenticate: ${JSON.stringify(loginResult.err)}`);
+      }
 
-      // In a real app, you would call your authentication API here
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
-      // })
+      // After login, check if we can get the profile
+      const profileCheck = await authActor?.getMyProfile();
+      if ('ok' in profileCheck) {
+        console.log(profileCheck)
+        toast.success("Login successful")
+      } else {
+        toast.error("Login failed")
+      }
 
       // if (!response.ok) throw new Error('Login failed')
+
 
       // Redirect to dashboard
     } catch (err) {
       setError("Invalid email or password")
+      toast.error(err instanceof Error ? err.message : "Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -85,22 +93,6 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <button type="button" onClick={onForgotPassword} className="text-sm text-emerald-600 hover:underline">
-              Forgot password?
-            </button>
-          </div>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
 
         <div className="flex items-center space-x-2">
           <Checkbox
