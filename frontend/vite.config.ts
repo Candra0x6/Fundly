@@ -26,7 +26,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      declarations: path.resolve(__dirname, "src/declarations"),
+      '@declarations': path.resolve(__dirname, '../src/declarations'),
     },
   },
   server: {

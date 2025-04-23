@@ -18,7 +18,8 @@
     "baseUrl": ".",
     "types": ["vite/client", "@testing-library/jest-dom", "node"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@declarations/*": ["../src/declarations/*"]
     }
   },
   "include": ["src"]
