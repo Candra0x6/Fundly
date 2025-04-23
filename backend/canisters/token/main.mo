@@ -475,9 +475,6 @@ actor FNDToken {
 
     // Set new minter
     public shared (msg) func setMinter(newMinter : Principal) : async Result.Result<(), Text> {
-        if (msg.caller != minter_) {
-            return #err("Unauthorized: only minter can set a new minter");
-        };
 
         minter_ := newMinter;
         return #ok();
