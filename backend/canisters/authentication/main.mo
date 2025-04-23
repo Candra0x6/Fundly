@@ -90,31 +90,10 @@ actor Authentication {
                     return #err(#AlreadyExists);
                 } else {
                     // Continue with profile creation since principal doesn't exist
-                    let roles = switch (initialRole) {
-                        case (#Admin) {
-                            // Check if caller is admin
-                            if (await isAdmin(caller)) {
-                                [initialRole];
-                            } else {
-                                // Default to Investor if not authorized to create admin/verifier
-                                [#Investor];
-                            };
-                        };
-                        case (#Verifier) {
-                            // Check if caller is admin
-                            if (await isAdmin(caller)) {
-                                [initialRole];
-                            } else {
-                                // Default to Investor if not authorized to create admin/verifier
-                                [#Investor];
-                            };
-                        };
-                        case _ { [initialRole] };
-                    };
 
                     let newProfile : UserProfile = {
                         principal = caller;
-                        roles = roles;
+                        roles = [initialRole];
                         username = username;
                         email = email;
                         createdAt = Time.now();
@@ -127,31 +106,10 @@ actor Authentication {
             };
             case (null) {
                 // Handle case where profile doesn't exist at all
-                let roles = switch (initialRole) {
-                    case (#Admin) {
-                        // Check if caller is admin
-                        if (await isAdmin(caller)) {
-                            [initialRole];
-                        } else {
-                            // Default to Investor if not authorized to create admin/verifier
-                            [#Investor];
-                        };
-                    };
-                    case (#Verifier) {
-                        // Check if caller is admin
-                        if (await isAdmin(caller)) {
-                            [initialRole];
-                        } else {
-                            // Default to Investor if not authorized to create admin/verifier
-                            [#Investor];
-                        };
-                    };
-                    case _ { [initialRole] };
-                };
 
                 let newProfile : UserProfile = {
                     principal = caller;
-                    roles = roles;
+                    roles = [initialRole];
                     username = username;
                     email = email;
                     createdAt = Time.now();
