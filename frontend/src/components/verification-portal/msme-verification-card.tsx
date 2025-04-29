@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, FileText } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 
 interface MSMEVerificationCardProps {
   verification: {
@@ -18,7 +18,7 @@ interface MSMEVerificationCardProps {
 }
 
 export function MSMEVerificationCard({ verification }: MSMEVerificationCardProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -44,7 +44,11 @@ export function MSMEVerificationCard({ verification }: MSMEVerificationCardProps
 
   const handleVerify = () => {
     // Navigate to the MSME verification page
-    router.push(`/verification-portal/msme/${verification.id}`)
+    navigate(`/dashboard/verify/msme/${verification.id}`)
+  }
+  const handleRevenueVerify = () => {
+    // Navigate to the MSME verification page
+    navigate(`/dashboard/verify/revenue/${verification.id}`)
   }
 
   return (
@@ -75,9 +79,12 @@ export function MSMEVerificationCard({ verification }: MSMEVerificationCardProps
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-x-5">
+          <Button onClick={handleRevenueVerify} className="bg-white border-emerald-600 hover:bg-emerald-50 text-emerald-600 border-1">
+            Revenue Verification
+          </Button>
           <Button onClick={handleVerify} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-            Start Verification
+            Documents  Verification
           </Button>
         </div>
       </div>

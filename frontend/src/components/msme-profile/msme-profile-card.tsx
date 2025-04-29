@@ -1,119 +1,122 @@
-import { Building2, Calendar, Globe, Mail, MapPin, Phone } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Building, Calendar, Globe, MapPin } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { SingleAssetPreview } from "../examples/AssetPreviewExample"
 
 interface MSMEProfileCardProps {
-  msme: {
-    id: string
-    name: string
-    logo: string
-    coverImage: string
-    industry: string
-    location: string
-    foundedYear: number
-    description: string
-    contactEmail: string
-    contactPhone: string
-    website: string
-    socialMedia: {
-      twitter: string
-      instagram: string
-      facebook: string
-      linkedin: string
-    }
-  }
+  msme: any
 }
 
 export default function MSMEProfileCard({ msme }: MSMEProfileCardProps) {
+  if (!msme || !msme.details) {
+    return (
+      <Card className="w-full">
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar className="h-24 w-24">
+              <AvatarFallback>MS</AvatarFallback>
+            </Avatar>
+            <div className="text-center">
+              <h2 className="text-xl font-bold">Loading...</h2>
+              <p className="text-muted-foreground">MSME Profile</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const { details, contactInfo } = msme
+  // Check if logo is a valid Blob or File object before creating URL
+  const logoUrl =
+    details.logo && (details.logo instanceof Blob || details.logo.size) ? URL.createObjectURL(details.logo) : null
+
+  // Check if coverImage is a valid Blob or File object before creating URL
+  const coverImageUrl =
+    details.coverImage && (details.coverImage instanceof Blob || details.coverImage.size)
+      ? URL.createObjectURL(details.coverImage)
+      : null
+
+  const formatDate = (date: bigint) => {
+    if (!date) return "N/A"
+    const dateObj = new Date(Number(date))
+    return dateObj.toLocaleDateString()
+  }
+
   return (
-    <Card className="overflow-hidden">
-      <div className="relative h-40">
-        <img src={msme.coverImage || "/placeholder.svg"} alt={`${msme.name} cover`} className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      </div>
-
-      <div className="relative -mt-12 flex justify-center">
-        <div className="rounded-full border-4 border-white bg-white overflow-hidden h-24 w-24">
-          <img
-            src={msme.logo || "/placeholder.svg"}
-            alt={msme.name}
-            className="object-cover"
-          />
+    <Card className="w-full overflow-hidden">
+      {coverImageUrl && (
+        <div className="h-32 w-full relative">
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverImageUrl})` }} />
+          <div className="absolute inset-0 bg-black/30" />
         </div>
-      </div>
-
-      <CardHeader className="text-center pt-2">
-        <CardTitle className="text-2xl">{msme.name}</CardTitle>
-        <div className="flex items-center justify-center text-sm text-muted-foreground">
-          <Building2 className="h-4 w-4 mr-1" />
-          <span>{msme.industry}</span>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="text-sm">{msme.location}</p>
-            </div>
+      )}
+      <CardContent className={`p-6 ${coverImageUrl ? "-mt-16 relative" : ""}`}>
+        <div className="flex flex-col items-center space-y-4">
+          <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
+            {logoUrl ? (
+              <SingleAssetPreview assetId={details.logo?.assetId} />
+            ) : (
+              <AvatarFallback>{details.name?.substring(0, 2) || "MS"}</AvatarFallback>
+            )}
+          </Avatar>
+          <div className="text-center">
+            <h2 className="text-xl font-bold">{details.name || "Unnamed MSME"}</h2>
+            <p className="text-muted-foreground">{details.focusArea || "No focus area specified"}</p>
           </div>
 
-          <div className="flex items-start gap-2">
-            <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="text-sm">Founded in {msme.foundedYear}</p>
-            </div>
-          </div>
+          <div className="w-full space-y-3 pt-4">
+            {details.description && <p className="text-sm text-center">{details.description}</p>}
 
-          <Separator />
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">About</h3>
-            <p className="text-sm text-muted-foreground">{msme.description}</p>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Contact Information</h3>
-
-            <div className="flex items-start gap-2">
-              <Mail className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm">{msme.contactEmail}</p>
+            {details.industry && details.industry.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2">
+                {details.industry.map((ind, i) => (
+                  <Badge key={i} variant="secondary">
+                    {ind}
+                  </Badge>
+                ))}
               </div>
-            </div>
+            )}
 
-            <div className="flex items-start gap-2">
-              <Phone className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm">{msme.contactPhone}</p>
-              </div>
-            </div>
+            <div className="space-y-2 pt-2">
+              {details.foundingDate && (
+                <div className="flex items-center text-sm">
+                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>Founded: {formatDate(details.foundingDate)}</span>
+                </div>
+              )}
 
-            <div className="flex items-start gap-2">
-              <Globe className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm">
+              {contactInfo?.city && contactInfo?.country && (
+                <div className="flex items-center text-sm">
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>
+                    {contactInfo.city}, {contactInfo.country}
+                  </span>
+                </div>
+              )}
+
+              {contactInfo?.website && contactInfo.website.length > 0 && (
+                <div className="flex items-center text-sm">
+                  <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
                   <a
-                    href={msme.website}
+                    href={contactInfo.website[0]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-500 hover:underline"
+                    className="text-blue-600 hover:underline truncate"
                   >
-                    {msme.website.replace(/^https?:\/\//, "")}
+                    {contactInfo.website[0].replace(/^https?:\/\//, "")}
                   </a>
-                </p>
-              </div>
-            </div>
-          </div>
+                </div>
+              )}
 
-          <div className="pt-2">
-            <Button variant="outline" className="w-full">
-              View Public Profile
-            </Button>
+              {msme.financialInfo?.employeeCount && (
+                <div className="flex items-center text-sm">
+                  <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{msme.financialInfo.employeeCount.toString()} employees</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

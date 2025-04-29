@@ -98,13 +98,12 @@ export default function MSMERoadmap({ msmeId }: MSMERoadmapProps) {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{phase.title}</CardTitle>
                 <Badge
-                  className={`${
-                    phase.status === "completed"
+                  className={`${phase.status === "completed"
                       ? "bg-emerald-100 text-emerald-700"
                       : phase.status === "in-progress"
                         ? "bg-blue-100 text-blue-700"
                         : "bg-zinc-100 text-zinc-700"
-                  }`}
+                    }`}
                 >
                   {phase.status === "completed" ? (
                     <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -133,13 +132,12 @@ export default function MSMERoadmap({ msmeId }: MSMERoadmapProps) {
                   {phase.milestones.map((milestone, idx) => (
                     <div
                       key={idx}
-                      className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
-                        milestone.status === "completed"
+                      className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${milestone.status === "completed"
                           ? "bg-emerald-50 text-emerald-700"
                           : milestone.status === "in-progress"
                             ? "bg-blue-50 text-blue-700"
                             : "bg-zinc-50 text-zinc-700"
-                      }`}
+                        }`}
                     >
                       {milestone.status === "completed" ? (
                         <CheckCircle2 className="h-4 w-4" />
