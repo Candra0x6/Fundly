@@ -11,11 +11,9 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Types "../../types/lib";
 import Int "mo:base/Int";
-
 actor VerificationWorkflow {
     // Types
     type MSMEID = Types.MSMEID;
-    type MSMEProfile = Types.MSMEProfile;
 
     type VerificationOfficer = {
         id : Principal;
@@ -55,18 +53,12 @@ actor VerificationWorkflow {
     type Document = {
         id : Text;
         name : Text;
-        documentType : Text;
-        fileUrl : Text; // Could be asset canister reference
+        documentType : Types.DocumentType;
+        assetId : Text;
         uploadedAt : Time.Time;
         uploadedBy : Principal;
-        status : DocumentStatus;
+        status : Types.DocumentStatus;
         reviewComments : ?Text;
-    };
-
-    type DocumentStatus = {
-        #Pending;
-        #Approved;
-        #Rejected;
     };
 
     type Error = {
@@ -261,11 +253,14 @@ actor VerificationWorkflow {
     public shared ({ caller }) func uploadDocument(
         requestId : Text,
         name : Text,
-        documentType : Text,
-        fileUrl : Text,
+        docType : Types.DocumentType,
+        assetId : Text,
+        role : Types.UserRole,
     ) : async Result.Result<(), Error> {
-        // In a real implementation, check if caller is allowed to upload documents
-        // for this MSME (either MSME owner or verification officer)
+
+        if (role != #MSME) {
+            return #err(#Unauthorized);
+        };
 
         switch (verificationRequests.get(requestId)) {
             case (null) {
@@ -275,8 +270,8 @@ actor VerificationWorkflow {
                 let document : Document = {
                     id = _generateDocumentId();
                     name = name;
-                    documentType = documentType;
-                    fileUrl = fileUrl;
+                    documentType = docType;
+                    assetId = assetId;
                     uploadedAt = Time.now();
                     uploadedBy = caller;
                     status = #Pending;
@@ -306,7 +301,7 @@ actor VerificationWorkflow {
     public shared ({ caller }) func reviewDocument(
         requestId : Text,
         documentId : Text,
-        status : DocumentStatus,
+        status : Types.DocumentStatus,
         comments : ?Text,
     ) : async Result.Result<(), Error> {
         if (not _isVerificationOfficerOrAdmin(caller)) {
@@ -330,7 +325,7 @@ actor VerificationWorkflow {
                                 id = doc.id;
                                 name = doc.name;
                                 documentType = doc.documentType;
-                                fileUrl = doc.fileUrl;
+                                assetId = doc.assetId;
                                 uploadedAt = doc.uploadedAt;
                                 uploadedBy = doc.uploadedBy;
                                 status = status;
@@ -392,7 +387,6 @@ actor VerificationWorkflow {
                 // Notify MSME canister about the status change
                 // This would call the MSME canister to update status there
                 // await _notifyMsmeCanister(request.msmeId, status);
-
                 #ok();
             };
         };
