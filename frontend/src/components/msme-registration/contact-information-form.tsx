@@ -6,17 +6,18 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface ContactInformationFormProps {
-  data: {
-    address: string
-    city: string
-    state: string
-    postalCode: string
-    country: string
-    phone: string
-    email: string
-    website: string
-  }
+export interface ContactInformationFormData {
+  address: string
+  city: string
+  state: string
+  postalCode: string
+  country: string
+  phone: string
+  email: string
+  website: string
+}
+export interface ContactInformationFormProps {
+  data: ContactInformationFormData
   updateData: (data: any) => void
 }
 

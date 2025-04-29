@@ -14,12 +14,17 @@ import { CalendarIcon, DollarSign, Upload, Info } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
+import { useRevenueReporting } from "@/hooks/useRevenueReporting"
+import { getSession } from "@/utility/session"
+import toast from "react-hot-toast"
 
 interface RevenueReportingFormProps {
   onCancel: () => void
 }
 
 export default function RevenueReportingForm({ onCancel }: RevenueReportingFormProps) {
+  const msmeId = getSession("msme_id")
+  const { reportRevenue, distributeRevenue } = useRevenueReporting()
   const [date, setDate] = useState<Date>()
   const [reportData, setReportData] = useState({
     period: "q3-2023",
@@ -27,6 +32,7 @@ export default function RevenueReportingForm({ onCancel }: RevenueReportingFormP
     notes: "",
     document: null,
   })
+
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -46,13 +52,31 @@ export default function RevenueReportingForm({ onCancel }: RevenueReportingFormP
   }
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    toast.loading("Reporting revenue...")
     // In a real app, this would submit the revenue data to the backend
-    console.log("Revenue Report:", reportData, date)
     // Show success message or redirect
-    alert("Revenue reported successfully!")
-    onCancel()
+    const result = await reportRevenue(msmeId, BigInt(reportData.revenue), reportData.notes)
+    if (result.ok) {
+      toast.dismiss()
+      toast.success("Revenue reported successfully!")
+      toast.loading("Distribute Revenue...")
+      console.log(result.ok)
+      const distributeResult = await distributeRevenue(result.ok)
+      if (distributeResult.ok) {
+        toast.dismiss()
+        toast.success("Revenue distributed successfully!")
+        console.log(distributeResult)
+      } else {
+        toast.dismiss()
+        toast.error("Failed to distribute revenue")
+        console.log(distributeResult)
+      }
+    } else {
+      toast.dismiss()
+      toast.error("Failed to report revenue")
+    }
   }
 
   return (

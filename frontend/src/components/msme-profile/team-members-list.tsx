@@ -1,320 +1,275 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Plus, Upload, Trash2, Edit2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import type React from "react"
 
-interface TeamMember {
-  id: string
-  name: string
-  position: string
-  avatar: string
-  bio: string
-}
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Plus, Pencil, Trash2, Upload } from "lucide-react"
+import { TeamMember, Document } from "@declarations/msme_registration/msme_registration.did"
+import { useFileUpload } from "@/hooks/useFileUpload"
+import { getSession } from "@/utility/session"
+import { SingleAssetPreview } from "../examples/AssetPreviewExample"
 
 interface TeamMembersListProps {
   members: TeamMember[]
-  isEditing: boolean
+  onUpdate: (members: TeamMember[]) => void
 }
 
-export default function TeamMembersList({ members, isEditing }: TeamMembersListProps) {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(members)
-  const [editingMember, setEditingMember] = useState<string | null>(null)
-  const [newMember, setNewMember] = useState<Partial<TeamMember> | null>(null)
+export default function TeamMembersList({ members = [], onUpdate }: TeamMembersListProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [currentMember, setCurrentMember] = useState<TeamMember | null>(null)
+  const [editIndex, setEditIndex] = useState<number | null>(null)
+  const msmeId = getSession("msme_id")
+  const {
+    uploadState: {
+      progress,
+      status,
+      isUploading,
+      preview,
+      reset,
+      assetId: imageAssetId
+    },
+    uploadFile,
+  } = useFileUpload()
 
-  const handleEditMember = (id: string) => {
-    setEditingMember(id)
-  }
-
-  const handleCancelEdit = () => {
-    setEditingMember(null)
-  }
-
-  const handleSaveMember = (id: string) => {
-    // In a real app, this would save the changes to the backend
-    setEditingMember(null)
-  }
-
-  const handleDeleteMember = (id: string) => {
-    // In a real app, this would delete the member from the backend
-    setTeamMembers(teamMembers.filter((member) => member.id !== id))
-  }
-
-  const handleAddNewMember = () => {
-    setNewMember({
-      name: "",
-      position: "",
-      avatar: "/placeholder.svg?height=80&width=80",
+  const handleAddMember = () => {
+    setCurrentMember({
       bio: "",
+      name: "",
+      email: "",
+      image: {
+        id: "",
+        verified: false,
+        assetId: "",
+        name: "",
+        assetCanisterId: [],
+        docType: { TeamMemberImage: null },
+        uploadDate: BigInt(0)
+      },
+      position: "",
+    })
+    setEditIndex(null)
+    setIsDialogOpen(true)
+  }
+
+  const handleEditMember = (member: TeamMember, index: number) => {
+    setCurrentMember({ ...member })
+    setEditIndex(index)
+    setIsDialogOpen(true)
+  }
+
+  const handleDeleteMember = (index: number) => {
+    const updatedMembers = [...members]
+    updatedMembers.splice(index, 1)
+    onUpdate(updatedMembers)
+  }
+
+  const handleSaveMember = () => {
+    if (!currentMember) return
+
+    const updatedMembers = [...members]
+    if (editIndex !== null) {
+      updatedMembers[editIndex] = currentMember
+    } else {
+      updatedMembers.push(currentMember)
+    }
+
+    onUpdate(updatedMembers)
+    setIsDialogOpen(false)
+    setCurrentMember(null)
+    setEditIndex(null)
+  }
+
+  const handleInputChange = (field: keyof TeamMember, value: any) => {
+    if (!currentMember) return
+    setCurrentMember({
+      ...currentMember,
+      [field]: value,
     })
   }
 
-  const handleCancelNewMember = () => {
-    setNewMember(null)
-  }
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
 
-  const handleSaveNewMember = () => {
-    if (newMember && newMember.name && newMember.position) {
-      // In a real app, this would save the new member to the backend
-      const newId = `new-${Date.now()}`
-      setTeamMembers([
-        ...teamMembers,
-        {
-          id: newId,
-          name: newMember.name,
-          position: newMember.position,
-          avatar: newMember.avatar || "/placeholder.svg?height=80&width=80",
-          bio: newMember.bio || "",
-        },
-      ])
-      setNewMember(null)
-    }
-  }
-
-  const handleNewMemberChange = (field: string, value: string) => {
-    if (newMember) {
-      setNewMember({
-        ...newMember,
-        [field]: value,
+      const result = await uploadFile(file, {
+        entityId: msmeId,
+        documentType: "TeamMemberImage",
+        documentName: "Team Member Image",
+        description: "Image of the team member"
       })
+
+      // Create a temporary Document object for the image
+      const imageDoc: Document = {
+        id: result?.assetId || "",
+        verified: false,
+        assetId: result?.assetId || "",
+        name: result?.name || "",
+        assetCanisterId: [],
+        docType: { TeamMemberImage: null },
+        uploadDate: BigInt(Date.now())
+      };
+
+      handleInputChange("image", imageDoc);
     }
   }
 
-  const handleMemberChange = (id: string, field: string, value: string) => {
-    setTeamMembers(teamMembers.map((member) => (member.id === id ? { ...member, [field]: value } : member)))
+  // Function to display image or fallback
+  const getImageUrl = (member: TeamMember) => {
+    if (member.image && member.image.assetId && member.image.assetId.startsWith('blob:')) {
+      return member.image.assetId;
+    }
+    return "/placeholder.svg";
+  }
+
+  // Helper to get member initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name.substring(0, 2).toUpperCase();
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold">Team Members</h2>
-          <p className="text-zinc-500">Key personnel and leadership</p>
-        </div>
-        {isEditing && !newMember && (
-          <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={handleAddNewMember}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Team Member
-          </Button>
-        )}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Team Members</h3>
+        <Button onClick={handleAddMember} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Member
+        </Button>
       </div>
 
-      {/* New Member Form */}
-      {isEditing && newMember && (
-        <Card className="border-2 border-emerald-200">
-          <CardHeader>
-            <CardTitle>Add New Team Member</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="h-20 w-20 rounded-full overflow-hidden bg-zinc-100">
-                    <img
-                      src={newMember.avatar || "/placeholder.svg?height=80&width=80"}
-                      alt="New member avatar"
-                      width={80}
-                      height={80}
-                      className="object-cover"
+      {members.length === 0 ? (
+        <div className="text-center p-6 border rounded-lg bg-muted/20">
+          <p className="text-muted-foreground">No team members added yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {members.map((member, index) => (
+            <Card key={index}>
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <SingleAssetPreview
+                      assetId={imageAssetId || member.image?.assetId}
+                      previewUrlState={preview || undefined}
+                      className="h-12 w-12 rounded-full"
                     />
+                    <div>
+                      <CardTitle className="text-base">{member.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground">{member.position}</p>
+                    </div>
                   </div>
-                  <div className="absolute bottom-0 right-0">
-                    <label htmlFor="new-avatar-upload" className="cursor-pointer">
-                      <div className="h-6 w-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                        <Upload className="h-3 w-3 text-white" />
-                      </div>
-                      <input
-                        id="new-avatar-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          // In a real app, this would upload the file and get a URL back
-                          if (e.target.files && e.target.files[0]) {
-                            // Simulate a file upload
-                            handleNewMemberChange("avatar", "/placeholder.svg?height=80&width=80")
-                          }
-                        }}
-                      />
-                    </label>
+                  <div className="flex space-x-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditMember(member, index)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteMember(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <p className="text-sm line-clamp-3">{member.bio}</p>
+              </CardContent>
+              <CardFooter>
+                <p className="text-xs text-muted-foreground">{member.email}</p>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
 
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="new-name">Name</Label>
-                    <Input
-                      id="new-name"
-                      value={newMember.name || ""}
-                      onChange={(e) => handleNewMemberChange("name", e.target.value)}
-                      placeholder="Full Name"
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editIndex !== null ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <Avatar className="h-24 w-24">
+                  {currentMember?.image && currentMember.image.assetId ? (
+                    <SingleAssetPreview
+                      assetId={imageAssetId || currentMember.image?.assetId}
+                      previewUrlState={preview || undefined}
+                      className="h-24 w-24 rounded-full"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="new-position">Position</Label>
-                    <Input
-                      id="new-position"
-                      value={newMember.position || ""}
-                      onChange={(e) => handleNewMemberChange("position", e.target.value)}
-                      placeholder="Job Title"
-                    />
-                  </div>
-                </div>
+                  ) : (
+                    <AvatarFallback className="bg-muted">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <Input type="file" className="hidden" id="member-image" accept="image/*" onChange={handleImageChange} />
+                <Label
+                  htmlFor="member-image"
+                  className="absolute bottom-0 right-0 rounded-full bg-primary p-1 cursor-pointer"
+                >
+                  <Pencil className="h-3 w-3 text-primary-foreground" />
+                </Label>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="new-bio">Bio</Label>
-                <Textarea
-                  id="new-bio"
-                  value={newMember.bio || ""}
-                  onChange={(e) => handleNewMemberChange("bio", e.target.value)}
-                  placeholder="Brief biography"
-                  rows={3}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={currentMember?.name || ""}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Enter name"
                 />
               </div>
 
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCancelNewMember}>
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-emerald-500 hover:bg-emerald-600"
-                  onClick={handleSaveNewMember}
-                  disabled={!newMember.name || !newMember.position}
-                >
-                  Save Member
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="position">Position</Label>
+                <Input
+                  id="position"
+                  value={currentMember?.position || ""}
+                  onChange={(e) => handleInputChange("position", e.target.value)}
+                  placeholder="Enter position"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Team Members Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {teamMembers.map((member) => (
-          <Card key={member.id}>
-            <CardContent className="p-6">
-              {editingMember === member.id ? (
-                // Edit Mode
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="h-20 w-20 rounded-full overflow-hidden bg-zinc-100">
-                        <img
-                          src={member.avatar || "/placeholder.svg"}
-                          alt={member.name}
-                          width={80}
-                          height={80}
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="absolute bottom-0 right-0">
-                        <label htmlFor={`avatar-upload-${member.id}`} className="cursor-pointer">
-                          <div className="h-6 w-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                            <Upload className="h-3 w-3 text-white" />
-                          </div>
-                          <input
-                            id={`avatar-upload-${member.id}`}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              // In a real app, this would upload the file and get a URL back
-                              if (e.target.files && e.target.files[0]) {
-                                // Simulate a file upload
-                                handleMemberChange(member.id, "avatar", member.avatar)
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={currentMember?.email || ""}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                placeholder="Enter email"
+              />
+            </div>
 
-                    <div className="flex-1 space-y-2">
-                      <Input
-                        value={member.name}
-                        onChange={(e) => handleMemberChange(member.id, "name", e.target.value)}
-                        placeholder="Full Name"
-                      />
-                      <Input
-                        value={member.position}
-                        onChange={(e) => handleMemberChange(member.id, "position", e.target.value)}
-                        placeholder="Job Title"
-                      />
-                    </div>
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={currentMember?.bio || ""}
+                onChange={(e) => handleInputChange("bio", e.target.value)}
+                placeholder="Enter bio"
+                rows={4}
+              />
+            </div>
+          </div>
 
-                  <Textarea
-                    value={member.bio}
-                    onChange={(e) => handleMemberChange(member.id, "bio", e.target.value)}
-                    placeholder="Brief biography"
-                    rows={3}
-                  />
-
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={handleCancelEdit}>
-                      Cancel
-                    </Button>
-                    <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={() => handleSaveMember(member.id)}>
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                // View Mode
-                <div>
-                  <div className="flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-full overflow-hidden bg-zinc-100">
-                      <img
-                        src={member.avatar || "/placeholder.svg"}
-                        alt={member.name}
-                        width={80}
-                        height={80}
-                        className="object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-lg">{member.name}</h3>
-                      <p className="text-zinc-500">{member.position}</p>
-                    </div>
-                  </div>
-                  <p className="mt-4 text-zinc-600">{member.bio}</p>
-
-                  {isEditing && (
-                    <div className="flex justify-end gap-2 mt-4">
-                      <Button variant="outline" size="sm" onClick={() => handleEditMember(member.id)}>
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteMember(member.id)}>
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {teamMembers.length === 0 && (
-        <div className="text-center py-12 bg-zinc-50 rounded-lg border border-zinc-200">
-          <p className="text-zinc-500">No team members added yet</p>
-          {isEditing && (
-            <Button className="bg-emerald-500 hover:bg-emerald-600 mt-4" onClick={handleAddNewMember}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Team Member
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
             </Button>
-          )}
-        </div>
-      )}
+            <Button onClick={handleSaveMember}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
