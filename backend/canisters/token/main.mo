@@ -45,6 +45,15 @@ actor FNDToken {
         created_at_time : ?Timestamp;
     };
 
+    public type SpesificTransferArgs = {
+        from_subaccount : ?Subaccount;
+        from : Account;
+        to : Account;
+        amount : Nat;
+        fee : ?Nat;
+        memo : ?Memo;
+        created_at_time : ?Timestamp;
+    };
     public type ApproveArgs = {
         from_subaccount : ?Subaccount;
         spender : Account;
@@ -209,12 +218,58 @@ actor FNDToken {
         return minter_;
     };
 
+    public shared (msg) func getBalance() : async Nat {
+        let from : Account = {
+            owner = msg.caller;
+            subaccount = null;
+
+        };
+        return _balanceOf(from);
+    };
+
     // Account balance
     public query func icrc1_balance_of(account : Account) : async Nat {
         return _balanceOf(account);
     };
 
     // Transfer tokens
+
+    public shared (_msg) func icrc_spesific_transfer(args : SpesificTransferArgs) : async Result.Result<Nat, TransferError> {
+
+        // Validate transfer
+        if (Option.isSome(args.fee) and Option.unwrap(args.fee) != fee_) {
+            return #err(#BadFee({ expected_fee = fee_ }));
+        };
+
+        let balance = _balanceOf(args.from);
+        let amount = args.amount + fee_;
+
+        if (balance < amount) {
+            return #err(#InsufficientFunds({ balance = balance }));
+        };
+
+        // Execute transfer
+        _transfer(args.from, args.to, args.amount, fee_);
+
+        // Record transaction
+        let txid = nextTxId;
+        let tx : Transaction = {
+            id = txid;
+            from = args.from;
+            to = args.to;
+            amount = args.amount;
+            fee = ?fee_;
+            memo = args.memo;
+            timestamp = _now();
+            operation = "transfer";
+        };
+
+        transactions.put(txid, tx);
+        nextTxId += 1;
+
+        return #ok(txid);
+    };
+
     public shared (msg) func icrc1_transfer(args : TransferArgs) : async Result.Result<Nat, TransferError> {
         let from : Account = {
             owner = msg.caller;
@@ -230,6 +285,8 @@ actor FNDToken {
         let amount = args.amount + fee_;
 
         if (balance < amount) {
+            Debug.print("Account: " # Principal.toText(from.owner) # " balance: " # Nat.toText(balance) # " amount: " # Nat.toText(amount));
+            Debug.print("Insufficient funds: balance = " # Nat.toText(balance) # ", amount = " # Nat.toText(amount));
             return #err(#InsufficientFunds({ balance = balance }));
         };
 
