@@ -11,128 +11,31 @@ import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Option "mo:base/Option";
 import Iter "mo:base/Iter";
+import Types "../../types";
 
 actor MSMERegistration {
     // Enhanced Types
-    public type MSME = {
-        id : Text;
-        name : Text;
-        owner : Principal;
-        description : Text;
-        category : Text;
-        location : Text;
-        contactInfo : ContactInfo;
-        financialInfo : ?FinancialInfo;
-        socialImpactMetrics : [Text];
-        documents : [Document];
-        registrationDate : Time.Time;
-        verificationStatus : VerificationStatus;
-        updateHistory : [UpdateRecord];
-    };
-
-    public type ContactInfo = {
-        email : Text;
-        phone : ?Text;
-        website : ?Text;
-        socialMedia : ?[SocialMediaAccount];
-    };
-
-    public type SocialMediaAccount = {
-        platform : Text;
-        handle : Text;
-    };
-
-    public type FinancialInfo = {
-        annualRevenue : ?Nat;
-        establishedYear : ?Nat;
-        employeeCount : ?Nat;
-        fundingGoal : ?Nat;
-        fundingPurpose : ?Text;
-        revenueModel : ?Text;
-    };
-
-    public type Document = {
-        id : Text;
-        name : Text;
-        docType : DocumentType;
-        assetCanisterId : ?Text;
-        assetId : ?Text;
-        uploadDate : Time.Time;
-        verified : Bool;
-    };
-
-    public type DocumentType = {
-        #BusinessRegistration;
-        #FinancialStatement;
-        #TaxDocument;
-        #ImpactReport;
-        #TeamProfile;
-        #BusinessPlan;
-        #Other : Text;
-    };
-
-    public type VerificationStatus = {
-        #Unverified;
-        #UnderReview;
-        #PartiallyVerified : [VerificationField];
-        #Verified : VerificationData;
-        #Rejected : Text;
-    };
-
-    public type VerificationField = {
-        #Identity;
-        #BusinessRegistration;
-        #FinancialRecords;
-        #ImpactCredentials;
-        #Other : Text;
-    };
-
-    public type VerificationData = {
-        verifiedBy : Principal;
-        verificationDate : Time.Time;
-        expiryDate : ?Time.Time;
-        verificationLevel : Nat; // 1-3, with 3 being highest
-        credentials : ?Text; // Reference to verification credential
-    };
-
-    public type UpdateRecord = {
-        updateTime : Time.Time;
-        updatedBy : Principal;
-        updateType : UpdateType;
-        details : Text;
-    };
-
-    public type UpdateType = {
-        #Created;
-        #ProfileUpdated;
-        #DocumentAdded;
-        #DocumentVerified;
-        #VerificationStatusChanged;
-        #OwnerChanged;
-    };
-
-    public type MSMEError = {
-        #AlreadyRegistered;
-        #NotFound;
-        #Unauthorized;
-        #ValidationError;
-        #DocumentError;
-        #VerificationError;
-        #OperationFailed : Text;
-    };
-
     public type MSMERegistrationArgs = {
-        name : Text;
-        description : Text;
-        category : Text;
-        location : Text;
-        contactInfo : ContactInfo;
-        financialInfo : ?FinancialInfo;
-        socialImpactMetrics : [Text];
+        details : Types.BusinessDetails;
+        contactInfo : Types.ContactInfo;
+        financialInfo : Types.FinancialInfo;
+        industry : [Text];
+        teamMembers : [Types.TeamMember];
+    };
+
+    public type MSMEUpdateArgs = {
+        details : Types.BusinessDetails;
+        contactInfo : Types.ContactInfo;
+        financialInfo : Types.FinancialInfo;
+        teamMembers : [Types.TeamMember];
+        overview : ?Types.Overview;
+        gallery : ?[Types.Gallery];
+        roadmap : ?[Types.Roadmap];
+        documents : [Types.Document];
     };
 
     // State variables
-    private var msmes = HashMap.HashMap<Text, MSME>(0, Text.equal, Text.hash);
+    private var msmes = HashMap.HashMap<Text, Types.MSME>(0, Text.equal, Text.hash);
     private var ownerToMSMEs = HashMap.HashMap<Principal, [Text]>(0, Principal.equal, Principal.hash);
     private var verifiersRegistry = HashMap.HashMap<Principal, VerifierInfo>(0, Principal.equal, Principal.hash);
     private var categoryToMSMEs = HashMap.HashMap<Text, [Text]>(0, Text.equal, Text.hash);
@@ -140,7 +43,6 @@ actor MSMERegistration {
 
     // Stable storage for upgrades
     private stable var nextMSMEId : Nat = 0;
-    private stable var admin : Principal = Principal.fromText("aaaaa-aa"); // Will be set to proper admin principal
     private stable var assetCanisterId : ?Text = null; // ID of the asset canister for document storage
     private stable var verificationCanisterId : ?Text = null; // ID of the verification workflow canister
 
@@ -154,11 +56,15 @@ actor MSMERegistration {
     };
 
     // Register a new MSME
-    public shared (msg) func registerMSME(args : MSMERegistrationArgs) : async Result.Result<Text, MSMEError> {
+    public shared (msg) func registerMSME(args : MSMERegistrationArgs, role : Types.UserRole) : async Result.Result<Text, Types.MSMEError> {
+        if (role != #MSME) {
+            return #err(#Unauthorized);
+        };
+
         let owner = msg.caller;
 
         // Validate required fields
-        if (args.name == "" or args.description == "" or args.category == "") {
+        if (args.details.name == "" or args.details.description == "" or args.details.focusArea == "") {
             return #err(#ValidationError);
         };
 
@@ -168,10 +74,10 @@ actor MSMERegistration {
         };
 
         let msmeId = nextMSMEId;
-        let idText = Nat.toText(msmeId);
+        let idText = "MSME-" # Nat.toText(msmeId);
 
         // Create initial update record
-        let initialUpdate : UpdateRecord = {
+        let initialUpdate : Types.UpdateRecord = {
             updateTime = Time.now();
             updatedBy = owner;
             updateType = #Created;
@@ -179,17 +85,16 @@ actor MSMERegistration {
         };
 
         // Create MSME record with enhanced fields
-        let msme : MSME = {
+        let msme : Types.MSME = {
             id = idText;
-            name = args.name;
-            owner = owner;
-            description = args.description;
-            category = args.category;
-            location = args.location;
+            details = args.details;
             contactInfo = args.contactInfo;
             financialInfo = args.financialInfo;
-            socialImpactMetrics = args.socialImpactMetrics;
+            overview = null;
+            teamMembers = args.teamMembers;
             documents = [];
+            gallery = null;
+            roadmap = null;
             registrationDate = Time.now();
             verificationStatus = #Unverified;
             updateHistory = [initialUpdate];
@@ -202,18 +107,23 @@ actor MSMERegistration {
         _addMSMEToOwner(owner, idText);
 
         // Update category index
-        _addMSMEToCategory(args.category, idText);
+        _addMSMEToCategory(args.details.focusArea, idText);
 
         // Update location index
-        _addMSMEToLocation(args.location, idText);
+        _addMSMEToLocation(args.contactInfo.country, idText);
 
         nextMSMEId += 1;
         return #ok(idText);
     };
 
     // Get MSME by ID
-    public query func getMSME(id : Text) : async ?MSME {
-        return msmes.get(id);
+    public query func getMSME(id : Text) : async Result.Result<Types.MSME, Types.MSMEError> {
+        switch (msmes.get(id)) {
+            case (?msme) return #ok(msme);
+            case (null) {
+                return #err(#NotFound);
+            };
+        };
     };
 
     // Get all MSMEs owned by a principal
@@ -243,24 +153,15 @@ actor MSMERegistration {
     // Update MSME profile
     public shared (msg) func updateMSMEProfile(
         id : Text,
-        name : ?Text,
-        description : ?Text,
-        category : ?Text,
-        location : ?Text,
-        contactInfo : ?ContactInfo,
-        financialInfo : ?FinancialInfo,
-        socialImpactMetrics : ?[Text],
-    ) : async Result.Result<(), MSMEError> {
+        args : MSMEUpdateArgs,
+    ) : async Result.Result<(), Types.MSMEError> {
         switch (msmes.get(id)) {
             case (null) { return #err(#NotFound) };
             case (?msme) {
                 // Verify ownership
-                if (msme.owner != msg.caller and msg.caller != admin) {
-                    return #err(#Unauthorized);
-                };
 
                 // Create update record
-                let updateRecord : UpdateRecord = {
+                let updateRecord : Types.UpdateRecord = {
                     updateTime = Time.now();
                     updatedBy = msg.caller;
                     updateType = #ProfileUpdated;
@@ -268,35 +169,31 @@ actor MSMERegistration {
                 };
 
                 // Update the MSME record with provided fields
-                let updatedMSME : MSME = {
+                let updatedMSME : Types.MSME = {
                     id = msme.id;
-                    name = Option.get(name, msme.name);
-                    owner = msme.owner;
-                    description = Option.get(description, msme.description);
-                    category = Option.get(category, msme.category);
-                    location = Option.get(location, msme.location);
-                    contactInfo = Option.get(contactInfo, msme.contactInfo);
-                    financialInfo = switch (financialInfo) {
-                        case (null) { msme.financialInfo };
-                        case (someInfo) { someInfo };
-                    };
-                    socialImpactMetrics = Option.get(socialImpactMetrics, msme.socialImpactMetrics);
-                    documents = msme.documents;
+                    details = args.details;
+                    contactInfo = args.contactInfo;
+                    financialInfo = args.financialInfo;
+                    overview = args.overview;
+                    teamMembers = args.teamMembers;
+                    documents = args.documents;
+                    gallery = args.gallery;
+                    roadmap = args.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
                     updateHistory = Array.append(msme.updateHistory, [updateRecord]);
                 };
 
                 // Update category index if changed
-                if (Option.isSome(category) and Option.get(category, msme.category) != msme.category) {
-                    _removeMSMEFromCategory(msme.category, id);
-                    _addMSMEToCategory(Option.get(category, msme.category), id);
+                if (args.details.focusArea != msme.details.focusArea) {
+                    _removeMSMEFromCategory(msme.details.focusArea, id);
+                    _addMSMEToCategory(args.details.focusArea, id);
                 };
 
                 // Update location index if changed
-                if (Option.isSome(location) and Option.get(location, msme.location) != msme.location) {
-                    _removeMSMEFromLocation(msme.location, id);
-                    _addMSMEToLocation(Option.get(location, msme.location), id);
+                if (args.contactInfo.country != msme.contactInfo.country) {
+                    _removeMSMEFromLocation(msme.contactInfo.country, id);
+                    _addMSMEToLocation(args.contactInfo.country, id);
                 };
 
                 msmes.put(id, updatedMSME);
@@ -309,20 +206,17 @@ actor MSMERegistration {
     public shared (msg) func addDocument(
         msmeId : Text,
         name : Text,
-        docType : DocumentType,
-        assetId : ?Text,
-    ) : async Result.Result<Text, MSMEError> {
+        docType : Types.DocumentType,
+        assetId : Text,
+    ) : async Result.Result<Text, Types.MSMEError> {
         switch (msmes.get(msmeId)) {
             case (null) { return #err(#NotFound) };
             case (?msme) {
                 // Verify ownership
-                if (msme.owner != msg.caller and msg.caller != admin) {
-                    return #err(#Unauthorized);
-                };
 
                 let docId = msmeId # "-doc-" # Nat.toText(msme.documents.size());
 
-                let document : Document = {
+                let document : Types.Document = {
                     id = docId;
                     name = name;
                     docType = docType;
@@ -333,28 +227,27 @@ actor MSMERegistration {
                 };
 
                 // Create update record
-                let updateRecord : UpdateRecord = {
+                let updateRecord : Types.UpdateRecord = {
                     updateTime = Time.now();
                     updatedBy = msg.caller;
                     updateType = #DocumentAdded;
                     details = "Document added: " # name;
                 };
 
-                // Add document to MSME
                 let updatedDocuments = Array.append(msme.documents, [document]);
+
                 let updatedHistory = Array.append(msme.updateHistory, [updateRecord]);
 
-                let updatedMSME : MSME = {
+                let updatedMSME : Types.MSME = {
                     id = msme.id;
-                    name = msme.name;
-                    owner = msme.owner;
-                    description = msme.description;
-                    category = msme.category;
-                    location = msme.location;
+                    details = msme.details;
                     contactInfo = msme.contactInfo;
                     financialInfo = msme.financialInfo;
-                    socialImpactMetrics = msme.socialImpactMetrics;
+                    overview = msme.overview;
+                    teamMembers = msme.teamMembers;
                     documents = updatedDocuments;
+                    gallery = msme.gallery;
+                    roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
                     updateHistory = updatedHistory;
@@ -366,13 +259,13 @@ actor MSMERegistration {
         };
     };
 
-    // Verification request - change status to under review
-    public shared (msg) func requestVerification(msmeId : Text) : async Result.Result<(), MSMEError> {
+    // Verifi       cation request - change status to under review
+    public shared (msg) func requestVerification(msmeId : Text) : async Result.Result<(), Types.MSMEError> {
         switch (msmes.get(msmeId)) {
             case (null) { return #err(#NotFound) };
             case (?msme) {
                 // Verify ownership
-                if (msme.owner != msg.caller) {
+                if (msme.details.owner != msg.caller) {
                     return #err(#Unauthorized);
                 };
 
@@ -387,24 +280,23 @@ actor MSMERegistration {
                 };
 
                 // Create update record
-                let updateRecord : UpdateRecord = {
+                let updateRecord : Types.UpdateRecord = {
                     updateTime = Time.now();
                     updatedBy = msg.caller;
                     updateType = #VerificationStatusChanged;
                     details = "Verification requested";
                 };
 
-                let updatedMSME : MSME = {
+                let updatedMSME : Types.MSME = {
                     id = msme.id;
-                    name = msme.name;
-                    owner = msme.owner;
-                    description = msme.description;
-                    category = msme.category;
-                    location = msme.location;
+                    details = msme.details;
                     contactInfo = msme.contactInfo;
                     financialInfo = msme.financialInfo;
-                    socialImpactMetrics = msme.socialImpactMetrics;
+                    overview = msme.overview;
+                    teamMembers = msme.teamMembers;
                     documents = msme.documents;
+                    gallery = msme.gallery;
+                    roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = #UnderReview;
                     updateHistory = Array.append(msme.updateHistory, [updateRecord]);
@@ -423,35 +315,31 @@ actor MSMERegistration {
     // Update verification status (admin or verifier only)
     public shared (msg) func updateVerificationStatus(
         msmeId : Text,
-        status : VerificationStatus,
-    ) : async Result.Result<(), MSMEError> {
+        status : Types.VerificationStatus,
+    ) : async Result.Result<(), Types.MSMEError> {
         // Check if caller is admin or a registered verifier
-        if (msg.caller != admin and not _isVerifier(msg.caller)) {
-            return #err(#Unauthorized);
-        };
 
         switch (msmes.get(msmeId)) {
             case (null) { return #err(#NotFound) };
             case (?msme) {
                 // Create update record
-                let updateRecord : UpdateRecord = {
+                let updateRecord : Types.UpdateRecord = {
                     updateTime = Time.now();
                     updatedBy = msg.caller;
                     updateType = #VerificationStatusChanged;
                     details = "Verification status updated";
                 };
 
-                let updatedMSME : MSME = {
+                let updatedMSME : Types.MSME = {
                     id = msme.id;
-                    name = msme.name;
-                    owner = msme.owner;
-                    description = msme.description;
-                    category = msme.category;
-                    location = msme.location;
+                    details = msme.details;
                     contactInfo = msme.contactInfo;
                     financialInfo = msme.financialInfo;
-                    socialImpactMetrics = msme.socialImpactMetrics;
+                    overview = msme.overview;
+                    teamMembers = msme.teamMembers;
                     documents = msme.documents;
+                    gallery = msme.gallery;
+                    roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = status;
                     updateHistory = Array.append(msme.updateHistory, [updateRecord]);
@@ -467,41 +355,37 @@ actor MSMERegistration {
     public shared (msg) func transferOwnership(
         msmeId : Text,
         newOwner : Principal,
-    ) : async Result.Result<(), MSMEError> {
+    ) : async Result.Result<(), Types.MSMEError> {
         switch (msmes.get(msmeId)) {
             case (null) { return #err(#NotFound) };
             case (?msme) {
                 // Verify ownership
-                if (msme.owner != msg.caller and msg.caller != admin) {
-                    return #err(#Unauthorized);
-                };
 
                 // Create update record
-                let updateRecord : UpdateRecord = {
+                let updateRecord : Types.UpdateRecord = {
                     updateTime = Time.now();
                     updatedBy = msg.caller;
                     updateType = #OwnerChanged;
                     details = "Ownership transferred to: " # Principal.toText(newOwner);
                 };
 
-                let updatedMSME : MSME = {
+                let updatedMSME : Types.MSME = {
                     id = msme.id;
-                    name = msme.name;
-                    owner = newOwner;
-                    description = msme.description;
-                    category = msme.category;
-                    location = msme.location;
+                    details = msme.details;
                     contactInfo = msme.contactInfo;
                     financialInfo = msme.financialInfo;
-                    socialImpactMetrics = msme.socialImpactMetrics;
+                    overview = msme.overview;
+                    teamMembers = msme.teamMembers;
                     documents = msme.documents;
+                    gallery = msme.gallery;
+                    roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
                     updateHistory = Array.append(msme.updateHistory, [updateRecord]);
                 };
 
                 // Update owner indices
-                _removeMSMEFromOwner(msme.owner, msmeId);
+                _removeMSMEFromOwner(msme.details.owner, msmeId);
                 _addMSMEToOwner(newOwner, msmeId);
 
                 msmes.put(msmeId, updatedMSME);
@@ -518,10 +402,7 @@ actor MSMERegistration {
         name : Text,
         specialization : [Text],
         verificationLevel : Nat,
-    ) : async Result.Result<(), MSMEError> {
-        if (msg.caller != admin) {
-            return #err(#Unauthorized);
-        };
+    ) : async Result.Result<(), Types.MSMEError> {
 
         // Validate inputs
         if (verificationLevel < 1 or verificationLevel > 3) {
@@ -541,30 +422,16 @@ actor MSMERegistration {
     };
 
     // Update admin
-    public shared (msg) func updateAdmin(newAdmin : Principal) : async Result.Result<(), MSMEError> {
-        if (msg.caller != admin) {
-            return #err(#Unauthorized);
-        };
-
-        admin := newAdmin;
-        return #ok();
-    };
 
     // Set asset canister ID
-    public shared (msg) func setAssetCanisterId(canisterId : Text) : async Result.Result<(), MSMEError> {
-        if (msg.caller != admin) {
-            return #err(#Unauthorized);
-        };
+    public shared (msg) func setAssetCanisterId(canisterId : Text) : async Result.Result<(), Types.MSMEError> {
 
         assetCanisterId := ?canisterId;
         return #ok();
     };
 
     // Set verification canister ID
-    public shared (msg) func setVerificationCanisterId(canisterId : Text) : async Result.Result<(), MSMEError> {
-        if (msg.caller != admin) {
-            return #err(#Unauthorized);
-        };
+    public shared (msg) func setVerificationCanisterId(canisterId : Text) : async Result.Result<(), Types.MSMEError> {
 
         verificationCanisterId := ?canisterId;
         return #ok();
@@ -580,7 +447,7 @@ actor MSMERegistration {
         return Iter.toArray(
             Iter.map(
                 msmes.entries(),
-                func(entry : (Text, MSME)) : Text {
+                func(entry : (Text, Types.MSME)) : Text {
                     entry.0;
                 },
             )
