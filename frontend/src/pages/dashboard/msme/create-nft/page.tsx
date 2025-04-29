@@ -31,34 +31,58 @@ import {
 import NFTPreview from "@/components/msme-dashboard/nft-preview";
 import ImageCropper from "@/components/msme-dashboard/image-cropper";
 import toast from "react-hot-toast";
+import { useStorageActor } from "@/utility/actors/storageActor";
+import { getSession } from "@/utility/session";
+import { uploadMSMEDocument } from "@/utility/uploadFile";
+import { useMsmeActor } from "@/utility/actors/msmeActor";
+import { useNftActor } from "@/utility/actors/nftActor";
+import { Document, DocumentStatus } from "@declarations/nft_canister/nft_canister.did";
+import { DocumentType } from "@declarations/msme_registration/msme_registration.did";
+// Custom Document type for NFT images
+interface NFTDocument {
+  id: string;
+  assetId: string[];
+  dateAdded: bigint;
+  verified: boolean;
+}
+
+interface NFTData {
+  name: string;
+  description: string;
+  price: string;
+  returnRate: number[];
+  image: Document | null;
+  imageUrl: string | null;
+  termsAccepted: boolean;
+  msmeId: string;
+}
 
 export default function CreateNFTPage() {
-  // Mock user data
-  const user = {
-    name: "Sarah Chen",
-    role: "msme",
-    avatar: "/placeholder.svg?height=40&width=40",
-    company: "GreenTech Solutions",
-  };
+  // Get actors and session
+  const storageActor = useStorageActor();
+  const msmeActor = useMsmeActor();
+  const nftActor = useNftActor();
+  const msmeId = getSession("msme_id");
 
   // State for NFT form
-  const [nftData, setNftData] = useState({
-    title: "",
+  const [nftData, setNftData] = useState<NFTData>({
+    name: "",
     description: "",
     price: "",
     returnRate: [15],
-    timeframe: "quarterly",
-    duration: "1",
-    totalSupply: "",
-    minInvestment: "",
-    image: "/placeholder.svg?height=300&width=500",
+    image: null,
+    imageUrl: null,
     termsAccepted: false,
+    msmeId: msmeId || "",
   });
 
   // State for image upload
   const [showCropper, setShowCropper] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
 
   // Handle form input changes
   const handleInputChange = (
@@ -76,14 +100,6 @@ export default function CreateNFTPage() {
     setNftData({
       ...nftData,
       returnRate: value,
-    });
-  };
-
-  // Handle select change
-  const handleSelectChange = (name: string, value: string) => {
-    setNftData({
-      ...nftData,
-      [name]: value,
     });
   };
 
@@ -113,21 +129,107 @@ export default function CreateNFTPage() {
   };
 
   // Handle cropped image
-  const handleCroppedImage = (croppedImage: string) => {
-    setNftData({
-      ...nftData,
-      image: croppedImage,
-    });
+  const handleCroppedImage = async (croppedImage: string) => {
+    // Convert base64 to file
+    const fetchRes = await fetch(croppedImage);
+    const blob = await fetchRes.blob();
+    const file = new File([blob], "nft-image.png", { type: "image/png" });
+
+    setUploadStatus("Uploading image...");
+
+    try {
+      // Upload image using the document upload utility
+      const result = await uploadMSMEDocument(
+        msmeActor,
+        storageActor,
+        file,
+        msmeId,
+        "NFTImage",
+        (progress: number) => {
+          setUploadProgress(progress);
+          setUploadStatus(`Uploading: ${progress}%`);
+        }
+      );
+
+      setNftData({
+        ...nftData,
+        image: {
+          assetCanisterId: [],
+          assetId: result.assetId,
+          docType: { "GalleryImage": null } as DocumentType,
+          id: result.assetId,
+          name: "NFT Image",
+          uploadDate: BigInt(Date.now()),
+          verified: true,
+          status: { Approved: null } as DocumentStatus,
+        },
+        imageUrl: croppedImage,
+      });
+
+      toast.success("Image uploaded successfully");
+      setUploadStatus("");
+      setUploadProgress(0);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+      setUploadStatus("");
+    }
+
     setShowCropper(false);
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would submit the NFT data to the backend
-    console.log("NFT Data:", nftData);
-    // Redirect to success page or show success message
-    toast.success("NFT created successfully!");
+
+    if (!nftData.termsAccepted) {
+      toast.error("Please accept the terms and conditions");
+      return;
+    }
+
+    if (!nftData.image) {
+      toast.error("Please upload an image for your NFT");
+      return;
+    }
+
+    if (!nftData.name || !nftData.description || !nftData.price) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Convert price string to number
+      const priceValue = parseInt(nftData.price, 10);
+      // Convert revenue share percentage to basis points (e.g., 15% → 1500)
+      const revenueShareValue = nftData.returnRate[0] * 100;
+      const role = { "MSME": null }
+      // Mocking the call to backend mintRevenueShareNFT function
+      // In production, this would call the actual NFT canister
+      const result = await nftActor.mintRevenueShareNFT(
+        nftData.name,
+        nftData.description,
+        nftData.msmeId,
+        BigInt(revenueShareValue),
+        nftData.image,
+        role,
+        BigInt(priceValue)
+      );
+
+      // Simulate backend processing
+
+      toast.success("NFT created successfully!");
+
+      // Redirect to the MSME dashboard
+      // window.location.href = "/dashboard/msme";
+      console.log(result)
+    } catch (error) {
+      console.error("Error creating NFT:", error);
+      toast.error(`Failed to create NFT: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -165,12 +267,12 @@ export default function CreateNFTPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">NFT Title</Label>
+                    <Label htmlFor="name">NFT Name</Label>
                     <Input
-                      id="title"
-                      name="title"
+                      id="name"
+                      name="name"
                       placeholder="e.g., Q3 Revenue Share"
-                      value={nftData.title}
+                      value={nftData.name}
                       onChange={handleInputChange}
                       required
                     />
@@ -206,79 +308,8 @@ export default function CreateNFTPage() {
                         />
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="totalSupply">Total Supply</Label>
-                      <Input
-                        id="totalSupply"
-                        name="totalSupply"
-                        type="number"
-                        placeholder="100"
-                        value={nftData.totalSupply}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="minInvestment">
-                        Minimum Investment (FND)
-                      </Label>
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
-                        <Input
-                          id="minInvestment"
-                          name="minInvestment"
-                          type="number"
-                          placeholder="1000"
-                          value={nftData.minInvestment}
-                          onChange={handleInputChange}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="timeframe">Distribution Timeframe</Label>
-                      <Select
-                        value={nftData.timeframe}
-                        onValueChange={(value) =>
-                          handleSelectChange("timeframe", value)
-                        }
-                      >
-                        <SelectTrigger id="timeframe">
-                          <SelectValue placeholder="Select timeframe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="quarterly">Quarterly</SelectItem>
-                          <SelectItem value="biannual">Bi-annual</SelectItem>
-                          <SelectItem value="annual">Annual</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="duration">Duration</Label>
-                    <Select
-                      value={nftData.duration}
-                      onValueChange={(value) =>
-                        handleSelectChange("duration", value)
-                      }
-                    >
-                      <SelectTrigger id="duration">
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 Year</SelectItem>
-                        <SelectItem value="2">2 Years</SelectItem>
-                        <SelectItem value="3">3 Years</SelectItem>
-                        <SelectItem value="5">5 Years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -359,9 +390,9 @@ export default function CreateNFTPage() {
                       </div>
 
                       <div className="flex items-center justify-center bg-zinc-50 rounded-lg overflow-hidden">
-                        {nftData.image ? (
+                        {nftData.imageUrl ? (
                           <img
-                            src={nftData.image || "/placeholder.svg"}
+                            src={nftData.imageUrl}
                             alt="NFT Preview"
                             className="max-w-full max-h-[200px] object-contain"
                           />
@@ -394,6 +425,18 @@ export default function CreateNFTPage() {
                       />
                     </div>
                   )}
+
+                  {uploadStatus && (
+                    <div className="mt-3">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">{uploadStatus}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -408,7 +451,7 @@ export default function CreateNFTPage() {
                     </h4>
                     <p className="mb-2">
                       This NFT Revenue Share Agreement ("Agreement") is entered
-                      into between GreenTech Solutions ("Issuer") and the
+                      into between the MSME ("Issuer") and the
                       purchaser of the NFT ("Holder").
                     </p>
                     <ol className="list-decimal pl-5 space-y-2">
@@ -419,13 +462,11 @@ export default function CreateNFTPage() {
                       </li>
                       <li>
                         <strong>Distribution Schedule:</strong> Revenue
-                        distributions will be made according to the schedule
-                        specified in the NFT details.
+                        distributions will be made quarterly.
                       </li>
                       <li>
                         <strong>Term:</strong> This Agreement shall remain in
-                        effect for the duration specified in the NFT details,
-                        starting from the date of purchase.
+                        effect until terminated by the Issuer.
                       </li>
                       <li>
                         <strong>Reporting:</strong> The Issuer shall provide
@@ -438,7 +479,7 @@ export default function CreateNFTPage() {
                       </li>
                       <li>
                         <strong>Governing Law:</strong> This Agreement shall be
-                        governed by the laws of Singapore.
+                        governed by the laws applicable to the Internet Computer blockchain.
                       </li>
                     </ol>
                   </div>
@@ -470,9 +511,19 @@ export default function CreateNFTPage() {
                 <Button
                   type="submit"
                   className="bg-emerald-500 hover:bg-emerald-600"
-                  disabled={!nftData.termsAccepted}
+                  disabled={!nftData.termsAccepted || isSubmitting}
                 >
-                  Create NFT
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
+                    </>
+                  ) : (
+                    "Create NFT"
+                  )}
                 </Button>
               </div>
             </form>
@@ -486,7 +537,17 @@ export default function CreateNFTPage() {
                   <CardTitle className="text-lg">NFT Preview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <NFTPreview nft={nftData} />
+                  <NFTPreview
+                    nft={{
+                      title: nftData.name || "NFT Title",
+                      description: nftData.description || "NFT description",
+                      price: nftData.price || "0",
+                      returnRate: nftData.returnRate,
+                      timeframe: "quarterly",
+                      duration: "1",
+                      image: nftData.imageUrl || "/placeholder.svg"
+                    }}
+                  />
                 </CardContent>
               </Card>
 

@@ -5,14 +5,14 @@ import { DecisionControls } from "@/components/verification-portal/decision-cont
 import { FeedbackForm } from "@/components/verification-portal/feedback-form"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 
 
-export default function MSMEVerificationPage({ params }: { params: { id: string } }) {
+export default function MSMEVerificationPage() {
   // In a real application, you would fetch the MSME data based on the ID
-  const msmeId = params.id
 
-  // Mock MSME data for demonstration
+  // Mock MSME data for demonstrationc
+  const msmeId = useParams().id
   const msmeData = {
     id: msmeId,
     name: "Green Harvest Farms",
@@ -24,7 +24,7 @@ export default function MSMEVerificationPage({ params }: { params: { id: string 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <Link to="/verification-portal">
+        <Link to="/dashboard/verify">
           <Button
             variant="ghost"
             className="pl-0 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -47,14 +47,14 @@ export default function MSMEVerificationPage({ params }: { params: { id: string 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <MSMEDetailReview msmeId={msmeId} />
-          <DocumentReviewer msmeId={msmeId} />
+          <MSMEDetailReview msmeId={msmeId || ""} />
+          <DocumentReviewer msmeId={msmeId || ""} />
         </div>
 
         <div className="space-y-8">
-          <VerificationChecklist msmeId={msmeId} />
-          <FeedbackForm msmeId={msmeId} />
-          <DecisionControls msmeId={msmeId} />
+          <VerificationChecklist msmeId={msmeId || ""} />
+          <FeedbackForm msmeId={msmeId || ""} />
+          <DecisionControls msmeId={msmeId || ""} />
         </div>
       </div>
     </div>

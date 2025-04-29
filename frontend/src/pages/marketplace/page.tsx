@@ -22,20 +22,8 @@ import {
 import NFTCard from "@/components/nft-card";
 import ActiveFilters from "@/components/active-filters";
 import MarketplaceHeader from "@/components/marketplace-header";
-
-interface NFT {
-  id: string;
-  title: string;
-  company: string;
-  price: string;
-  returnRate: string;
-  timeframe: string;
-  raised: string;
-  image: string;
-  industry: string;
-  location: string;
-  verified: boolean;
-}
+import { useNftActor } from "@/utility/actors/nftActor";
+import { ICRC7TokenMetadata, MSME, NFT } from "@declarations/nft_canister/nft_canister.did";
 
 interface FilterItem {
   id: string;
@@ -44,133 +32,15 @@ interface FilterItem {
 }
 
 export default function MarketplacePage() {
-  // Sample NFT data
-  const nfts = [
-    {
-      id: "1",
-      title: "GreenTech Q3 Revenue Share",
-      company: "GreenTech Solutions",
-      price: "5,000 FND",
-      returnRate: "12-15%",
-      timeframe: "Quarterly",
-      raised: "75%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Renewable Energy",
-      location: "Singapore",
-      verified: true,
-    },
-    {
-      id: "2",
-      title: "Harvest Season Revenue",
-      company: "Organic Harvest Co.",
-      price: "3,500 FND",
-      returnRate: "8-10%",
-      timeframe: "Bi-annual",
-      raised: "60%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Agriculture",
-      location: "Indonesia",
-      verified: true,
-    },
-    {
-      id: "3",
-      title: "EdTech Platform Expansion",
-      company: "EduTech Innovations",
-      price: "7,500 FND",
-      returnRate: "15-18%",
-      timeframe: "Annual",
-      raised: "40%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Education",
-      location: "Philippines",
-      verified: true,
-    },
-    {
-      id: "4",
-      title: "Healthcare App Development",
-      company: "MediTech Solutions",
-      price: "6,200 FND",
-      returnRate: "10-12%",
-      timeframe: "Quarterly",
-      raised: "55%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Healthcare",
-      location: "Thailand",
-      verified: true,
-    },
-    {
-      id: "5",
-      title: "Sustainable Fashion Line",
-      company: "EcoWear Designs",
-      price: "4,800 FND",
-      returnRate: "9-11%",
-      timeframe: "Bi-annual",
-      raised: "65%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Fashion",
-      location: "Vietnam",
-      verified: true,
-    },
-    {
-      id: "6",
-      title: "Local Food Delivery Network",
-      company: "FoodConnect",
-      price: "3,200 FND",
-      returnRate: "11-14%",
-      timeframe: "Quarterly",
-      raised: "80%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Food & Beverage",
-      location: "Malaysia",
-      verified: true,
-    },
-    {
-      id: "7",
-      title: "Eco-Tourism Expansion",
-      company: "NatureTrek Adventures",
-      price: "5,500 FND",
-      returnRate: "13-16%",
-      timeframe: "Annual",
-      raised: "45%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Tourism",
-      location: "Indonesia",
-      verified: true,
-    },
-    {
-      id: "8",
-      title: "Fintech Payment Solution",
-      company: "PayEase",
-      price: "8,000 FND",
-      returnRate: "14-17%",
-      timeframe: "Quarterly",
-      raised: "35%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Fintech",
-      location: "Singapore",
-      verified: true,
-    },
-    {
-      id: "9",
-      title: "Artisanal Craft Marketplace",
-      company: "CraftConnect",
-      price: "2,800 FND",
-      returnRate: "7-9%",
-      timeframe: "Bi-annual",
-      raised: "70%",
-      image: "/placeholder.svg?height=200&width=300",
-      industry: "Handicrafts",
-      location: "Philippines",
-      verified: true,
-    },
-  ];
+
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeFilters, setActiveFilters] = useState<FilterItem[]>([]);
-  const [filteredNfts, setFilteredNfts] = useState<NFT[]>(nfts);
+  const [filteredNfts, setFilteredNfts] = useState<{ nft: NFT; msmeData: MSME[] }[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-
+  const [data, setData] = useState<ICRC7TokenMetadata[]>([]);
+  const [nfts, setNfts] = useState<{ nft: NFT; msmeData: MSME[] }[]>([]);
   // Industry filter state
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([
     "All Industries",
@@ -203,95 +73,105 @@ export default function MarketplacePage() {
     "Tourism",
   ];
 
+  const nftActor = useNftActor()
   // Apply filters and search
   useEffect(() => {
-    let results = [...nfts];
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      results = results.filter(
-        (nft) =>
-          nft.title.toLowerCase().includes(query) ||
-          nft.company.toLowerCase().includes(query) ||
-          nft.industry.toLowerCase().includes(query)
-      );
+    const fetchNfts = async () => {
+      const result = await nftActor.getAllMSMENFTsWithMSMEData()
+      const a = await nftActor.getAllListingsWithDetails()
+      console.log(a)
+      // @ts-ignore
+      setNfts(result)
     }
+    fetchNfts()
+    // let results = [...nfts];
 
-    // Apply industry filter (if not "All Industries")
-    if (
-      activeFilters.some(
-        (filter) =>
-          filter.category === "Industry" && filter.value !== "All Industries"
-      )
-    ) {
-      const industryValues = activeFilters
-        .filter((filter) => filter.category === "Industry")
-        .map((filter) => filter.value);
+    // // Apply search filter
+    // if (searchQuery) {
+    //   const query = searchQuery.toLowerCase();
+    //   results = results.filter(
+    //     (nft) =>
+    //       nft.nft.metadata.name.toLowerCase().includes(query) ||
+    //       // FIX ARRAY
+    //       nft.msmeData[0].details.name.toLowerCase().includes(query) ||
+    //   );
+    // }
 
-      results = results.filter((nft) => industryValues.includes(nft.industry));
-    }
+    // // Apply industry filter (if not "All Industries")
+    // if (
+    //   activeFilters.some(
+    //     (filter) =>
+    //       filter.category === "Industry" && filter.value !== "All Industries"
+    //   )
+    // ) {
+    //   const industryValues = activeFilters
+    //     .filter((filter) => filter.category === "Industry")
+    //     .map((filter) => filter.value);
 
-    // Apply return rate filter
-    if (activeFilters.some((filter) => filter.category === "Return")) {
-      const returnValues = activeFilters
-        .filter((filter) => filter.category === "Return")
-        .map((filter) => filter.value);
+    //   results = results.filter((nft) => industryValues.includes(nft.msmeData[0].details.industry[0]));
+    // }
 
-      results = results.filter((nft) => {
-        const [min, max] = nft.returnRate
-          .split("-")
-          .map((r) => parseInt(r.trim().replace("%", "")));
+    // // Apply return rate filter
+    // if (activeFilters.some((filter) => filter.category === "Return")) {
+    //   const returnValues = activeFilters
+    //     .filter((filter) => filter.category === "Return")
+    //     .map((filter) => filter.value);
 
-        return returnValues.some((range) => {
-          const [rangeMin, rangeMax] = range
-            .split("-")
-            .map((r) => parseInt(r.trim().replace("%", "")));
-          return min >= rangeMin && max <= rangeMax;
-        });
-      });
-    }
+    //   results = results.filter((nft) => {
+    //     const [min, max] = nft.msmeData[0].financialInfo.annualRevenue
+    //       .toString()
+    //       .split("-")
+    //       .map((r) => parseInt(r.trim().replace("%", "")));
 
-    // Apply price filter
-    if (activeFilters.some((filter) => filter.category === "Price")) {
-      const priceValues = activeFilters
-        .filter((filter) => filter.category === "Price")
-        .map((filter) => filter.value);
+    //     return returnValues.some((range) => {
+    //       const [rangeMin, rangeMax] = range
+    //         .split("-")
+    //         .map((r) => parseInt(r.trim().replace("%", "")));
+    //       return min >= rangeMin && max <= rangeMax;
+    //     });
+    //   });
+    // }
 
-      results = results.filter((nft) => {
-        const nftPrice = parseInt(nft.price.replace(/[^\d]/g, ""));
+    // // Apply price filter
+    // if (activeFilters.some((filter) => filter.category === "Price")) {
+    //   const priceValues = activeFilters
+    //     .filter((filter) => filter.category === "Price")
+    //     .map((filter) => filter.value);
 
-        return priceValues.some((range) => {
-          if (range.includes("Under")) {
-            const threshold = parseInt(range.replace(/[^\d]/g, ""));
-            return nftPrice < threshold;
-          } else if (range.includes("Over")) {
-            const threshold = parseInt(range.replace(/[^\d]/g, ""));
-            return nftPrice > threshold;
-          } else {
-            const [rangeMin, rangeMax] = range
-              .split("-")
-              .map((p) => parseInt(p.trim().replace(/[^\d]/g, "")));
-            return nftPrice >= rangeMin && nftPrice <= rangeMax;
-          }
-        });
-      });
-    }
+    //   results = results.filter((nft) => {
+    //     const nftPrice = parseInt(nft.nft.metadata.price.toString().replace(/[^\d]/g, ""));
 
-    // Apply distribution frequency filter
-    if (activeFilters.some((filter) => filter.category === "Distribution")) {
-      const frequencyValues = activeFilters
-        .filter((filter) => filter.category === "Distribution")
-        .map((filter) => filter.value);
+    //     return priceValues.some((range) => {
+    //       if (range.includes("Under")) {
+    //         const threshold = parseInt(range.replace(/[^\d]/g, ""));
+    //         return nftPrice < threshold;
+    //       } else if (range.includes("Over")) {
+    //         const threshold = parseInt(range.replace(/[^\d]/g, ""));
+    //         return nftPrice > threshold;
+    //       } else {
+    //         const [rangeMin, rangeMax] = range
+    //           .split("-")
+    //           .map((p) => parseInt(p.trim().replace(/[^\d]/g, "")));
+    //         return nftPrice >= rangeMin && nftPrice <= rangeMax;
+    //       }
+    //     });
+    //   });
+    // }
 
-      results = results.filter((nft) =>
-        frequencyValues.includes(nft.timeframe)
-      );
-    }
+    // // Apply distribution frequency filter
+    // if (activeFilters.some((filter) => filter.category === "Distribution")) {
+    //   const frequencyValues = activeFilters
+    //     .filter((filter) => filter.category === "Distribution")
+    //     .map((filter) => filter.value);
 
-    setFilteredNfts(results);
-  }, [searchQuery, activeFilters, nfts]);
+    //   results = results.filter((nft) =>
+    //     frequencyValues.includes(nft.msmeData[0].financialInfo.annualRevenue.toString())
+    //   );
+    // }
 
+    fetchNfts()
+    // setFilteredNfts(results);
+  }, [searchQuery, activeFilters])
   // Add a filter
   const addFilter = (category: string, value: string) => {
     const newFilter: FilterItem = {
@@ -416,6 +296,9 @@ export default function MarketplacePage() {
     setShowFilters(!showFilters);
   };
 
+
+
+  console.log(nfts)
   return (
     <div className="min-h-screen bg-white ">
 
@@ -475,14 +358,14 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {/* Active Filters */}
+        {/* Active Filters
         <ActiveFilters
           activeFilters={activeFilters}
           removeFilter={removeFilter}
           clearAllFilters={clearAllFilters}
           searchQuery={searchQuery}
           clearSearch={clearSearch}
-        />
+        /> */}
 
         {/* Filter Categories */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -767,8 +650,8 @@ export default function MarketplacePage() {
           {/* NFT Grid */}
           <div className="md:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredNfts.length > 0 ? (
-                filteredNfts.map((nft) => <NFTCard key={nft.id} nft={nft} />)
+              {nfts ? (
+                nfts.map((nft, index) => <NFTCard key={index} nft={nft} />)
               ) : (
                 <div className="col-span-full text-center py-12">
                   <p className="text-zinc-500">

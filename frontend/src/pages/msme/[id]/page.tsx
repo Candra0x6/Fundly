@@ -203,35 +203,35 @@ export default function MSMEProfilePage() {
           </TabsList>
 
           <TabsContent value="overview">
-            <MSMEOverview msmeId={msme.id} />
+            <MSMEOverview msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="financials">
-            <MSMEFinancials msmeId={msme.id} />
+            <MSMEFinancials msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="team">
-            <MSMETeam msmeId={msme.id} />
+            <MSMETeam msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="roadmap">
-            <MSMERoadmap msmeId={msme.id} />
+            <MSMERoadmap msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="gallery">
-            <MSMEGallery msmeId={msme.id} />
+            <MSMEGallery msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="nfts">
-            <MSMENFTs msmeId={msme.id} />
+            <MSMENFTs msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="documents">
-            <MSMEDocuments msmeId={msme.id} />
+            <MSMEDocuments msmeId={msme.id || ""} />
           </TabsContent>
 
           <TabsContent value="verification">
-            <MSMEVerification msmeId={msme.id} />
+            <MSMEVerification msmeId={msme.id || ""} />
           </TabsContent>
         </Tabs>
       </div>

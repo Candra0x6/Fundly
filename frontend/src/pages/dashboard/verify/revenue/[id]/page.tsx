@@ -1,15 +1,12 @@
-import { RevenueReportDetails } from "@/components/verification-portal/revenue-report-details"
-import { SupportingDocumentViewer } from "@/components/verification-portal/supporting-document-viewer"
-import { VerificationHistory } from "@/components/verification-portal/verification-history"
-import { RevenueApprovalControls } from "@/components/verification-portal/revenue-approval-controls"
+
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 
 
-export default function RevenueVerificationPage({ params }: { params: { id: string } }) {
+export default function RevenueVerificationPage() {
   // In a real application, you would fetch the revenue report data based on the ID
-  const reportId = params.id
+  const reportId = useParams().id
 
   // Mock revenue report data for demonstration
   const reportData = {
@@ -24,7 +21,7 @@ export default function RevenueVerificationPage({ params }: { params: { id: stri
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <Link to="/verification-portal">
+        <Link to="/dashboard/verify">
           <Button
             variant="ghost"
             className="pl-0 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -48,17 +45,7 @@ export default function RevenueVerificationPage({ params }: { params: { id: stri
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <RevenueReportDetails reportId={reportId} />
-          <SupportingDocumentViewer reportId={reportId} />
-        </div>
 
-        <div className="space-y-8">
-          <VerificationHistory reportId={reportId} />
-          <RevenueApprovalControls reportId={reportId} />
-        </div>
-      </div>
-    </div>
+    </div >
   )
 }
