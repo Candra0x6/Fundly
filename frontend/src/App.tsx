@@ -1,5 +1,4 @@
 import { useAuth, AuthProvider } from "./utility/use-auth-client";
-import { backend } from "./utility/backend";
 import { Principal } from "@dfinity/principal";
 import {
   BrowserRouter,
@@ -14,13 +13,9 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // Others
 
-import ScrollToTop from "./utility/ScrollToTop";
 import { RegistrationProvider } from "./utility/RegistrationContext";
 import { Toaster } from "react-hot-toast";
-import An from "./a";
 import LandingPage from "./pages/LandingPage";
-import Navbar from "./components/elements/Navbar";
-import Footer from "./components/elements/Footer";
 import MarketplacePage from "./pages/marketplace/page";
 import MSMEProfilePage from "./pages/msme/[id]/page";
 import AuthPage from "./pages/auth/page";
@@ -34,6 +29,15 @@ import CreateNFTPage from "./pages/dashboard/msme/create-nft/page";
 import CreateMSMEProfilePage from "./pages/dashboard/msme/profile/page";
 import InvestorDashboardPage from "./pages/dashboard/user/page";
 import InvestorPortfolioPage from "./pages/dashboard/user/portofolio/page";
+import AdminDashboardPage from "./pages/dashboard/admin/page";
+import { backend } from "@declarations/backend";
+import DocumentsPage from "./pages/msme-registration/documents/page";
+import VerificationDashboardPage from "./pages/dashboard/verify/page";
+import MSMEVerificationPage from "./pages/dashboard/verify/msme/[id]/page";
+import RevenueVerificationPage from "./pages/dashboard/verify/revenue/[id]/page";
+import EditMSMEProfilePage from "./pages/dashboard/msme/profile/page";
+import { RevenueReportingDashboard } from "./examples/RevenueReportingExamples";
+import { VerificationWorkflowDashboard } from "./examples/VerificationWorkflowExamples";
 const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -67,9 +71,11 @@ const AnimatedRoutes: React.FC = () => {
     { path: "/dashboard/user/portfolio", label: "Portfolio", icon: BarChart3 },
     { path: "/dashboard/user/profile", label: "Profile", icon: User2 },
   ]
-  return (      
+  const adminNavItems = [
+    { path: "/dashboard/admin", label: "Dashboard", icon: Home },
+  ]
+  return (
     <>
-      <ScrollToTop />
 
       {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
 
@@ -124,7 +130,14 @@ const AnimatedRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-
+            <Route
+              path="/msme-registration/documents"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <DocumentsPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Dashboard Msme Pages */}
             <Route
@@ -147,11 +160,19 @@ const AnimatedRoutes: React.FC = () => {
               path="/dashboard/msme/profile"
               element={
                 <DashboardLayout navItems={msmeNavItems}>
-                  <CreateMSMEProfilePage />
+                  <EditMSMEProfilePage />
                 </DashboardLayout>
               }
             />
 
+            <Route
+              path="/m"
+              element={
+                <DashboardLayout navItems={msmeNavItems}>
+                  <VerificationWorkflowDashboard />
+                </DashboardLayout>
+              }
+            />
             {/* Dashboard Investor Pages */}
             <Route
               path="/dashboard/user"
@@ -167,6 +188,35 @@ const AnimatedRoutes: React.FC = () => {
               element={
                 <DashboardLayout navItems={investorNavItems}>
                   <InvestorPortfolioPage />
+                </DashboardLayout>
+              }
+            />
+
+
+            {/* Verify Dashboard */}
+            <Route
+              path="/dashboard/verify"
+              element={
+                <VerificationDashboardPage />}
+            />
+            <Route
+              path="/dashboard/verify/msme/:id"
+              element={
+                <MSMEVerificationPage />
+              }
+            />
+            <Route
+              path="/dashboard/verify/revenue/:id"
+              element={
+                <RevenueVerificationPage />
+              }
+            />
+            {/* Admin Pages */}
+            <Route
+              path="/dashboard/admin"
+              element={
+                <DashboardLayout navItems={adminNavItems}>
+                  <AdminDashboardPage />
                 </DashboardLayout>
               }
             />
