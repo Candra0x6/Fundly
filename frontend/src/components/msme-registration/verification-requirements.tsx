@@ -1,6 +1,21 @@
-import { CheckCircle, AlertCircle } from "lucide-react"
+"use client"
 
-export function VerificationRequirements() {
+import { useState } from "react"
+import { CheckCircle, AlertCircle, X, FileText, ListChecks } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+
+export function VerificationRequirementsDialog({ open = true, onClose = () => { } }) {
+  const [activeTab, setActiveTab] = useState("documents")
+
   const requiredDocuments = [
     {
       name: "Business Registration Certificate",
@@ -58,35 +73,38 @@ export function VerificationRequirements() {
   ]
 
   return (
-    <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-      <div className="bg-emerald-600 px-6 py-4">
-        <h2 className="text-xl font-bold text-white">MSME Verification Requirements</h2>
-        <p className="text-emerald-100 mt-1">Understanding what's needed for successful verification</p>
-      </div>
+    <div className="">
 
-      <div className="p-6">
-        <div className="mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Required Documents</h3>
-          <div className="space-y-4">
-            {requiredDocuments.map((doc, index) => (
-              <div key={index} className="flex">
-                <div className="flex-shrink-0 mt-1">
-                  <CheckCircle className="h-5 w-5 text-emerald-500" />
-                </div>
-                <div className="ml-3">
-                  <h4 className="text-base font-medium text-gray-900">{doc.name}</h4>
-                  <p className="text-sm text-gray-600">{doc.description}</p>
-                  <p className="text-xs text-emerald-600 mt-1">
-                    <span className="font-medium">Tip:</span> {doc.tips}
-                  </p>
-                </div>
+      <Tabs defaultValue="documents" value={activeTab} onValueChange={setActiveTab} className="mt-4">
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="documents" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Required Documents
+          </TabsTrigger>
+          <TabsTrigger value="process" className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4" />
+            Verification Process
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="documents" className="space-y-4 mt-2">
+          {requiredDocuments.map((doc, index) => (
+            <div key={index} className="flex">
+              <div className="flex-shrink-0 mt-1">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="ml-3">
+                <h4 className="text-base font-medium text-gray-900">{doc.name}</h4>
+                <p className="text-sm text-gray-600">{doc.description}</p>
+                <p className="text-xs text-emerald-600 mt-1">
+                  <span className="font-medium">Tip:</span> {doc.tips}
+                </p>
+              </div>
+            </div>
+          ))}
+        </TabsContent>
 
-        <div className="mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Verification Process</h3>
+        <TabsContent value="process" className="mt-2">
           <ol className="relative border-l border-gray-200 ml-3 space-y-6">
             {verificationProcess.map((process) => (
               <li key={process.step} className="ml-6">
@@ -98,26 +116,27 @@ export function VerificationRequirements() {
               </li>
             ))}
           </ol>
-        </div>
+        </TabsContent>
+      </Tabs>
 
-        <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-amber-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-amber-800">Important Information</h3>
-              <div className="mt-2 text-sm text-amber-700">
-                <p>
-                  The verification process typically takes 10-14 business days to complete. You will receive email
-                  updates at each stage of the process. If additional information is required, our team will contact you
-                  directly.
-                </p>
-              </div>
+      <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mt-6">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-amber-400" />
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-amber-800">Important Information</h3>
+            <div className="mt-2 text-sm text-amber-700">
+              <p>
+                The verification process typically takes 10-14 business days to complete. You will receive email
+                updates at each stage of the process. If additional information is required, our team will contact you
+                directly.
+              </p>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   )
 }

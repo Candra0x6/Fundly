@@ -9,12 +9,11 @@ interface RegistrationLayoutProps {
 
 export function RegistrationLayout({ children, currentStep, totalSteps }: RegistrationLayoutProps) {
   const steps = [
-    { id: 1, name: "Business Details" },
-    { id: 2, name: "Contact Information" },
-    { id: 3, name: "Financial Information" },
-    { id: 4, name: "Team Members" },
-    { id: 5, name: "Document Upload" },
-    { id: 6, name: "Submit" },
+    { id: 1, name: "Business" },
+    { id: 2, name: "Contact" },
+    { id: 3, name: "Financial" },
+    { id: 4, name: "Team" },
+    { id: 5, name: "Review" },
   ]
 
   return (

@@ -1,12 +1,14 @@
 "use client"
 import { FileText, User, Building, Phone, DollarSign, FileCheck } from "lucide-react"
-
+import { TeamMember } from "./team-members-form"
+import { Document } from "./document-upload-form"
+import { MSMERegistrationFormData } from "@/pages/msme-registration/page"
 interface RegistrationReviewProps {
   formData: {
     businessDetails: {
       name: string
       type: string
-      industry: string
+      industry: string[]
       foundingDate: string
       description: string
       logo: any
@@ -29,12 +31,12 @@ interface RegistrationReviewProps {
       investmentSought: string
       useOfFunds: string
     }
-    teamMembers: any[]
-    documents: any[]
+    teamMembers: TeamMember[]
+    documents: Document[]
   }
 }
 
-export function RegistrationReview({ formData }: RegistrationReviewProps) {
+export function RegistrationReview({ formData }: { formData: MSMERegistrationFormData }) {
   const formatDate = (dateString: string) => {
     if (!dateString) return "Not provided"
     return new Date(dateString).toLocaleDateString()
@@ -58,7 +60,7 @@ export function RegistrationReview({ formData }: RegistrationReviewProps) {
       "id_proof",
     ]
 
-    const uploadedRequiredDocs = formData.documents.filter((doc) => requiredDocTypes.includes(doc.type))
+    const uploadedRequiredDocs = formData.documents.filter((doc: Document) => requiredDocTypes.includes(doc.type))
 
     return {
       total: requiredDocTypes.length,
@@ -166,33 +168,25 @@ export function RegistrationReview({ formData }: RegistrationReviewProps) {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Annual Revenue</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {formatCurrency(formData.financialInformation.annualRevenue)}
+                  {formatCurrency(formData.financialInformation.annualRevenue.toString())}
                 </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Number of Employees</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {formData.financialInformation.employeeCount || "Not provided"}
+                  {formData.financialInformation.employeeCount.toString() || "Not provided"}
                 </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Funding Stage</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {formData.financialInformation.fundingStage || "Not provided"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Investment Sought</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {formData.financialInformation.investmentSought
-                    ? formatCurrency(formData.financialInformation.investmentSought)
-                    : "Not provided"}
+                  {formData.financialInformation.fundingGoal.toString() || "Not provided"}
                 </dd>
               </div>
               <div className="md:col-span-2">
                 <dt className="text-sm font-medium text-gray-500">Use of Funds</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {formData.financialInformation.useOfFunds || "Not provided"}
+                  {formData.financialInformation.fundingPurpose || "Not provided"}
                 </dd>
               </div>
             </dl>
@@ -210,7 +204,7 @@ export function RegistrationReview({ formData }: RegistrationReviewProps) {
               <p className="text-sm text-gray-500">No team members added</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {formData.teamMembers.map((member) => (
+                {formData.teamMembers.map((member: TeamMember) => (
                   <div key={member.id} className="border rounded-md p-3">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
@@ -246,9 +240,8 @@ export function RegistrationReview({ formData }: RegistrationReviewProps) {
             <div className="mb-4">
               <div className="flex items-center">
                 <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    documentStatus.complete ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"
-                  }`}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center ${documentStatus.complete ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"
+                    }`}
                 >
                   <FileCheck className="h-5 w-5" />
                 </div>
@@ -269,7 +262,7 @@ export function RegistrationReview({ formData }: RegistrationReviewProps) {
               <p className="text-sm text-gray-500">No documents uploaded</p>
             ) : (
               <ul className="divide-y divide-gray-200">
-                {formData.documents.map((doc) => (
+                {formData.documents.map((doc: Document) => (
                   <li key={doc.id} className="py-3 flex justify-between">
                     <div className="flex items-center">
                       <FileText className="h-5 w-5 text-gray-400 mr-3" />
@@ -279,9 +272,8 @@ export function RegistrationReview({ formData }: RegistrationReviewProps) {
                       </div>
                     </div>
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        doc.isRequired ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
-                      }`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${doc.isRequired ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+                        }`}
                     >
                       {doc.isRequired ? "Required" : "Optional"}
                     </span>

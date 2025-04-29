@@ -13,24 +13,58 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { CalendarIcon, Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useMsmeActor } from "@/utility/actors/msmeActor"
+import { useStorageActor } from "@/utility/actors/storageActor"
+import { getSession } from "@/utility/session"
+import toast from "react-hot-toast"
+import { Document } from "./document-upload-form"
+import { useFileUpload } from "@/hooks/useFileUpload"
 
-interface BusinessDetailsFormProps {
-  data: {
-    name: string
-    type: string
-    industry: string
-    foundingDate: string
-    description: string
-    logo: any
-    coverImage: any
-  }
+export interface BusinessDetailsFormData {
+  name: string
+  type: string
+  industry: string[]
+  foundingDate: string
+  description: string
+  logo: Document | null
+  coverImage: Document | null
+}
+export interface BusinessDetailsFormProps {
+  data: BusinessDetailsFormData
   updateData: (data: any) => void
 }
 
 export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormProps) {
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [date, setDate] = useState<Date | undefined>(data.foundingDate ? new Date(data.foundingDate) : undefined)
+
+  // Get actors
+  const msmeActor = useMsmeActor()
+  const storageActor = useStorageActor()
+  const msmeId = getSession("msme_id") || "0"
+
+  // Use the new upload hooks
+  const {
+    uploadState: {
+      progress: logoProgress,
+      status: logoStatus,
+      isUploading: uploadingLogo,
+      preview: logoPreview,
+      reset: resetLogoUpload
+    },
+    uploadFile: uploadLogo
+  } = useFileUpload()
+
+  const {
+    uploadState: {
+      progress: coverProgress,
+      status: coverStatus,
+      isUploading: uploadingCover,
+      preview: coverPreview,
+      reset: resetCoverUpload
+    },
+    uploadFile: uploadCover
+  } = useFileUpload()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     updateData({ [e.target.name]: e.target.value })
@@ -40,6 +74,14 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
     updateData({ [name]: value })
   }
 
+  const handleIndustryChange = (industry: string, checked: boolean) => {
+    if (checked) {
+      updateData({ industry: [...(data.industry || []), industry] })
+    } else {
+      updateData({ industry: (data.industry || []).filter(item => item !== industry) })
+    }
+  }
+
   const handleDateChange = (date: Date | undefined) => {
     setDate(date)
     if (date) {
@@ -47,35 +89,59 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
     }
   }
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
-      updateData({ logo: file })
 
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setLogoPreview(e.target.result as string)
-        }
+      const result = await uploadLogo(file, {
+        entityId: msmeId,
+        documentType: "BusinessLogo",
+        documentName: "Business Logo",
+        description: "Logo of the business"
+      })
+
+      if (result) {
+        updateData({
+          logo: {
+            id: result.assetId,
+            assetId: result.assetId,
+            name: result.name,
+            file: file,
+            type: "logo",
+            description: result.description,
+            isRequired: false,
+            dateUploaded: result.dateUploaded,
+          }
+        })
       }
-      reader.readAsDataURL(file)
     }
   }
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
-      updateData({ coverImage: file })
 
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setCoverPreview(e.target.result as string)
-        }
+      const result = await uploadCover(file, {
+        entityId: msmeId,
+        documentType: "BusinessCoverImage",
+        documentName: "Business Cover Image",
+        description: ""
+      })
+
+      if (result) {
+        updateData({
+          coverImage: {
+            id: result.assetId,
+            assetId: result.assetId,
+            name: result.name,
+            file: file,
+            type: "cover",
+            description: result.description,
+            isRequired: false,
+            dateUploaded: result.dateUploaded,
+          }
+        })
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -153,27 +219,32 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
             <Label htmlFor="industry">
               Industry <span className="text-red-500">*</span>
             </Label>
-            <Select value={data.industry} onValueChange={(value) => handleSelectChange("industry", value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select industry" />
-              </SelectTrigger>
-              <SelectContent>
-                {industries.map((industry) => (
-                  <SelectItem key={industry} value={industry}>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {industries.map((industry) => (
+                <div key={industry} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`industry-${industry}`}
+                    checked={data.industry?.includes(industry)}
+                    onCheckedChange={(checked) => handleIndustryChange(industry, checked as boolean)}
+                  />
+                  <Label
+                    htmlFor={`industry-${industry}`}
+                    className="cursor-pointer text-sm font-normal"
+                  >
                     {industry}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div>
+        <div className="flex flex-col gap-2">
           <Label htmlFor="foundingDate">
             Founding Date <span className="text-red-500">*</span>
           </Label>
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger>
               <Button
                 variant={"outline"}
                 className={cn("w-full mt-1 justify-start text-left font-normal", !date && "text-muted-foreground")}
@@ -182,8 +253,8 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
                 {date ? format(date, "PPP") : <span>Select date</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar mode="single" selected={date} onSelect={handleDateChange} initialFocus />
+            <PopoverContent className="w-full">
+              <Calendar mode="single" selected={date} onSelect={handleDateChange} className="flex flex-col" />
             </PopoverContent>
           </Popover>
         </div>
@@ -219,7 +290,7 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
                     size="sm"
                     className="absolute top-0 right-0 mt-1 mr-1"
                     onClick={() => {
-                      setLogoPreview(null)
+                      resetLogoUpload()
                       updateData({ logo: null })
                     }}
                   >
@@ -227,16 +298,46 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
                   </Button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-gray-400">
+                <label className={`flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-md ${uploadingLogo ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400'}`}>
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <p className="text-xs text-gray-500 mt-1">Upload logo</p>
+                    {uploadingLogo ? (
+                      <>
+                        <svg className="animate-spin h-8 w-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p className="text-xs text-gray-500 mt-1">Uploading...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <p className="text-xs text-gray-500 mt-1">Upload logo</p>
+                      </>
+                    )}
                   </div>
-                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={uploadingLogo}
+                  />
                 </label>
               )}
             </div>
             <p className="text-xs text-gray-500 mt-2">Recommended: Square image, 512x512px or larger</p>
+
+            {uploadingLogo && (
+              <div className="mt-3">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${logoProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{logoStatus}</p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -254,7 +355,7 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
                     size="sm"
                     className="absolute top-0 right-0 mt-1 mr-1"
                     onClick={() => {
-                      setCoverPreview(null)
+                      resetCoverUpload()
                       updateData({ coverImage: null })
                     }}
                   >
@@ -262,16 +363,46 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
                   </Button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-gray-400">
+                <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-md ${uploadingCover ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400'}`}>
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <p className="text-xs text-gray-500 mt-1">Upload cover image</p>
+                    {uploadingCover ? (
+                      <>
+                        <svg className="animate-spin h-8 w-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p className="text-xs text-gray-500 mt-1">Uploading...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <p className="text-xs text-gray-500 mt-1">Upload cover image</p>
+                      </>
+                    )}
                   </div>
-                  <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                    disabled={uploadingCover}
+                  />
                 </label>
               )}
             </div>
             <p className="text-xs text-gray-500 mt-2">Recommended: 1200x400px, 16:9 ratio</p>
+
+            {uploadingCover && (
+              <div className="mt-3">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${coverProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{coverStatus}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

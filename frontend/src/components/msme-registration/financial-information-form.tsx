@@ -7,14 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface FinancialInformationFormProps {
-  data: {
-    annualRevenue: string
-    employeeCount: string
-    fundingStage: string
-    investmentSought: string
-    useOfFunds: string
-  }
+export interface FinancialInformationFormData {
+  annualRevenue: number
+  employeeCount: number
+  fundingGoal: number
+  fundingPurpose: string
+}
+export interface FinancialInformationFormProps {
+  data: FinancialInformationFormData
   updateData: (data: any) => void
 }
 
@@ -26,19 +26,6 @@ export function FinancialInformationForm({ data, updateData }: FinancialInformat
   const handleSelectChange = (name: string, value: string) => {
     updateData({ [name]: value })
   }
-
-  const fundingStages = [
-    "Pre-seed",
-    "Seed",
-    "Series A",
-    "Series B",
-    "Series C",
-    "Series D+",
-    "Bootstrapped",
-    "Revenue Generating",
-    "Profitable",
-    "Other",
-  ]
 
   return (
     <div className="space-y-8">
@@ -81,43 +68,26 @@ export function FinancialInformationForm({ data, updateData }: FinancialInformat
         </div>
 
         <div>
-          <Label htmlFor="fundingStage">
-            Current Funding Stage <span className="text-red-500">*</span>
-          </Label>
-          <Select value={data.fundingStage} onValueChange={(value) => handleSelectChange("fundingStage", value)}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select funding stage" />
-            </SelectTrigger>
-            <SelectContent>
-              {fundingStages.map((stage) => (
-                <SelectItem key={stage} value={stage}>
-                  {stage}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="investmentSought">Investment Amount Sought (USD)</Label>
+          <Label htmlFor="fundingGoal">Funding Goal (USD)</Label>
           <Input
-            id="investmentSought"
-            name="investmentSought"
-            value={data.investmentSought}
+            id="fundingGoal"
+            name="fundingGoal"
+            value={data.fundingGoal}
             onChange={handleInputChange}
             placeholder="e.g. 500000"
             className="mt-1"
           />
         </div>
 
+
         <div>
-          <Label htmlFor="useOfFunds">
-            Use of Funds <span className="text-red-500">*</span>
+          <Label htmlFor="fundingPurpose">
+            Funding Purpose <span className="text-red-500">*</span>
           </Label>
           <Textarea
-            id="useOfFunds"
-            name="useOfFunds"
-            value={data.useOfFunds}
+            id="fundingPurpose"
+            name="fundingPurpose"
+            value={data.fundingPurpose}
             onChange={handleInputChange}
             placeholder="Describe how you plan to use the investment"
             className="mt-1 min-h-[120px]"

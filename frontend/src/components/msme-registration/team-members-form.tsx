@@ -9,14 +9,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Plus, Trash2, Edit2, User } from "lucide-react"
+import { toast } from "react-hot-toast"
+import { Document } from "./document-upload-form"
+import { uploadMSMEDocument } from "@/utility/uploadFile"
+import { useMsmeActor } from "@/utility/actors/msmeActor"
+import { useStorageActor } from "@/utility/actors/storageActor"
+import { getSession } from "@/utility/session"
 
-interface TeamMember {
+export interface TeamMember {
   id: string
   name: string
   position: string
   bio: string
   email: string
-  photo: any
+  photo: Document | null
   photoPreview?: string
 }
 
@@ -29,7 +35,12 @@ export function TeamMembersForm({ data, updateData }: TeamMembersFormProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [currentMember, setCurrentMember] = useState<TeamMember | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoStatus, setPhotoStatus] = useState("")
+  const [photoProgress, setPhotoProgress] = useState(0)
+  const msmeActor = useMsmeActor()
+  const storageActor = useStorageActor()
+  const msmeId = getSession("msme_id") || "0"
   const handleAddMember = () => {
     setCurrentMember({
       id: Date.now().toString(),
@@ -63,22 +74,19 @@ export function TeamMembersForm({ data, updateData }: TeamMembersFormProps) {
 
     if (data.some((member) => member.id === currentMember.id)) {
       // Update existing member
-      updateData(data.map((member) => (member.id === currentMember.id ? updatedMember : member)))
+      updateData(data.map((member) => (member.id === currentMember.id ? updatedMember as TeamMember : member)))
     } else {
       // Add new member
-      updateData([...data, updatedMember])
+      updateData([...data, updatedMember as TeamMember])
     }
 
     setIsDialogOpen(false)
   }
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && currentMember) {
       const file = e.target.files[0]
-      setCurrentMember({
-        ...currentMember,
-        photo: file,
-      })
+
 
       // Create preview
       const reader = new FileReader()
@@ -88,6 +96,48 @@ export function TeamMembersForm({ data, updateData }: TeamMembersFormProps) {
         }
       }
       reader.readAsDataURL(file)
+      setUploadingPhoto(true)
+      setPhotoStatus('Preparing upload...')
+      setPhotoProgress(0)
+      try {
+        const result = await uploadMSMEDocument(
+          msmeActor,
+          storageActor,
+          file,
+          msmeId,
+          "TeamMemberImage", // Document type for team member photo
+          (uploadProgress: number) => {
+            setPhotoProgress(uploadProgress)
+            setPhotoStatus(`Uploading: ${uploadProgress}%`)
+          }
+        )
+
+        setCurrentMember({
+          ...currentMember,
+          photo: {
+            id: result.assetId,
+            assetId: result.assetId,
+            name: currentMember.name,
+            file: file,
+            type: "image",
+            description: "Photo of the team member",
+            isRequired: false,
+            dateUploaded: new Date().toISOString(),
+          },
+        })
+
+        toast.success("Photo uploaded successfully")
+        setPhotoStatus('Upload successful!')
+      } catch (error) {
+        console.error("Error uploading photo:", error)
+        // @ts-ignore
+        const errorMessage = error.message || "Unknown error occurred"
+        toast.error(`Photo upload failed: ${errorMessage}`)
+        setPhotoStatus(`Error: ${errorMessage}`)
+      } finally {
+        setPhotoProgress(0)
+        setUploadingPhoto(false)
+      }
     }
   }
 
