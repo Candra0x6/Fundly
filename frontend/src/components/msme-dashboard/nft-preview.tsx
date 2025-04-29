@@ -10,8 +10,8 @@ interface NFTPreviewProps {
     description: string
     price: string
     returnRate: number[]
-    timeframe: string
-    duration: string
+    timeframe?: string
+    duration?: string
     image: string
   }
 }
@@ -63,7 +63,7 @@ export default function NFTPreview({ nft }: NFTPreviewProps) {
                     ? "Bi-annual"
                     : nft.timeframe === "annual"
                       ? "Annual"
-                      : "Not set"}
+                      : "Quarterly"}
             </p>
           </div>
           <div>
@@ -72,7 +72,7 @@ export default function NFTPreview({ nft }: NFTPreviewProps) {
               Duration
             </p>
             <p className="font-medium">
-              {nft.duration} {Number.parseInt(nft.duration) === 1 ? "Year" : "Years"}
+              {nft.duration || "1"} {Number.parseInt(nft.duration || "1") === 1 ? "Year" : "Years"}
             </p>
           </div>
         </div>
