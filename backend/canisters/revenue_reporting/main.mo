@@ -7,13 +7,14 @@ import Nat "mo:base/Nat";
 import Nat64 "mo:base/Nat64";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
-import Hash "mo:base/Hash";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
-import Option "mo:base/Option";
-import Iter "mo:base/Iter";
 import Int "mo:base/Int";
-
+import Debug "mo:base/Debug";
+import Error "mo:base/Error";
+import MSMECanister "canister:msme_registration";
+import NFTCanister "canister:nft_canister";
+import TokenCanister "canister:token_canister";
 actor RevenueReporting {
     // Types
     public type Revenue = {
@@ -52,12 +53,17 @@ actor RevenueReporting {
 
     public type Subaccount = Blob;
 
-    public type TransferArgs = {
+    public type Memo = Blob;
+    public type TokenTransferArgs = {
         from_subaccount : ?Subaccount;
-        to : Account;
+        to : {
+            owner : Principal;
+            subaccount : ?Subaccount;
+        };
+        from : Account;
         amount : Nat;
         fee : ?Nat;
-        memo : ?Blob;
+        memo : ?Memo;
         created_at_time : ?Nat64;
     };
 
@@ -78,24 +84,6 @@ actor RevenueReporting {
     private stable var nextRevenueId : Nat = 0;
     private stable var admin : Principal = Principal.fromText("aaaaa-aa"); // Will be set to proper admin principal
 
-    // External interfaces (will be replaced with actual canister IDs)
-    private let MSMECanister = actor "aaaaa-aa" : actor {
-        getMSME : (id : Text) -> async ?{ owner : Principal };
-    };
-
-    // Updated interface for ICRC-7 NFT Canister
-    private let NFTCanister = actor "aaaaa-aa" : actor {
-        getTokensByMSME : (msmeId : Text) -> async [Nat];
-        icrc7_owner_of : (tokenId : Nat) -> async ?Account;
-        getRevenueShare : (tokenId : Nat) -> async ?Nat;
-        recordDistribution : (tokenId : Nat, amount : Nat, msmeId : Text) -> async Result.Result<(), Text>;
-    };
-
-    // Updated interface for ICRC-1 Token Canister
-    private let TokenCanister = actor "aaaaa-aa" : actor {
-        icrc1_transfer : (args : TransferArgs) -> async Result.Result<Nat, TransferError>;
-    };
-
     // Report new revenue
     public shared (msg) func reportRevenue(
         msmeId : Text,
@@ -106,11 +94,13 @@ actor RevenueReporting {
         try {
             let msmeOpt = await MSMECanister.getMSME(msmeId);
             switch (msmeOpt) {
-                case (null) { return #err(#MSMENotFound) };
-                case (?msme) {
-                    if (msme.owner != msg.caller) {
+                case (#ok(msme)) {
+                    if (msme.details.owner != msg.caller) {
                         return #err(#Unauthorized);
                     };
+                };
+                case (#err(e)) {
+                    return #err(#MSMENotFound);
                 };
             };
         } catch (e) {
@@ -162,36 +152,40 @@ actor RevenueReporting {
     };
 
     // Distribute revenue to token holders based on ICRC-7 token ownership
-    public shared (msg) func distributeRevenue(revenueId : Text) : async Result.Result<(), RevenueError> {
-        if (msg.caller != admin) {
-            return #err(#Unauthorized);
-        };
-
+    public shared (msg) func distributeRevenue(revenueId : Text) : async Result.Result<Revenue, RevenueError> {
         switch (revenues.get(revenueId)) {
             case (null) { return #err(#NotFound) };
             case (?revenue) {
                 if (revenue.distributed) {
-                    return #ok(); // Already distributed
+                    return #ok(revenue); // Already distributed
                 };
 
                 // Get all tokens for this MSME
-                let tokenIds = try {
-                    await NFTCanister.getTokensByMSME(revenue.msmeId);
+                let tokensResult = try {
+                    await NFTCanister.getNFTsByMSME(revenue.msmeId);
                 } catch (e) {
                     return #err(#ValidationError);
                 };
 
-                if (tokenIds.size() == 0) {
-                    return #err(#NoTokensFound);
+                let tokens = switch (tokensResult) {
+                    case (#ok(ids)) {
+                        if (ids.size() == 0) {
+                            return #err(#NoTokensFound);
+                        };
+                        ids // Return the unwrapped array
+                    };
+                    case (#err(_error)) {
+                        return #err(#ValidationError);
+                    };
                 };
 
                 // Calculate total revenue shares
                 var totalShares = 0;
-                let tokenShares = Buffer.Buffer<(Nat, Nat)>(tokenIds.size());
+                let tokenShares = Buffer.Buffer<(Nat, Nat)>(tokens.size());
 
-                for (tokenId in tokenIds.vals()) {
+                for (token in tokens.vals()) {
                     let shareOpt = try {
-                        await NFTCanister.getRevenueShare(tokenId);
+                        await NFTCanister.getRevenueShare(token.id);
                     } catch (e) {
                         return #err(#ValidationError);
                     };
@@ -200,11 +194,10 @@ actor RevenueReporting {
                         case (null) {};
                         case (?share) {
                             totalShares += share;
-                            tokenShares.add((tokenId, share));
+                            tokenShares.add((token.id, share));
                         };
                     };
                 };
-
                 if (totalShares == 0) {
                     return #err(#ValidationError);
                 };
@@ -214,8 +207,14 @@ actor RevenueReporting {
 
                 for ((tokenId, share) in tokenShares.vals()) {
                     // Calculate amount to distribute to this token
-                    let amount = (revenue.amount * share) / totalShares;
-
+                    Debug.print("revenue Amount: " # Nat.toText(revenue.amount) # " share: " # Nat.toText(share) # " totalShare: " # Nat.toText(totalShares));
+                    let amount = (revenue.amount * share) / 10000;
+                    Debug.print("Amount to distribute: " # Nat.toText(amount));
+                    let msmeOpt = await MSMECanister.getMSME(revenue.msmeId);
+                    let msmeOwner = switch (msmeOpt) {
+                        case (#ok(msme)) { msme.details.owner };
+                        case (#err(_)) { return #err(#MSMENotFound) };
+                    };
                     if (amount > 0) {
                         // Get token owner
                         let ownerOpt = try {
@@ -227,18 +226,26 @@ actor RevenueReporting {
                         switch (ownerOpt) {
                             case (null) {};
                             case (?owner) {
+                                Debug.print("Owner: " # Principal.toText(owner.owner));
+                                Debug.print("MSME Owner: " # Principal.toText(msmeOwner));
+                                Debug.print("Amount: " # Nat.toText(amount));
                                 // Transfer tokens to the owner
                                 try {
-                                    let transferArgs : TransferArgs = {
+                                    let transferArgs : TokenTransferArgs = {
                                         from_subaccount = null;
                                         to = owner;
+                                        from = {
+                                            owner = msmeOwner;
+                                            subaccount = null;
+                                        };
                                         amount = amount;
                                         fee = null;
                                         memo = ?Text.encodeUtf8("Revenue distribution for MSME: " # revenue.msmeId);
                                         created_at_time = ?Nat64.fromNat(Int.abs(Time.now()));
                                     };
 
-                                    let transferResult = await TokenCanister.icrc1_transfer(transferArgs);
+                                    let transferResult = await TokenCanister.icrc_spesific_transfer(transferArgs);
+                                    Debug.print("Transferring... " # debug_show (transferResult));
 
                                     switch (transferResult) {
                                         case (#ok(txId)) {
@@ -255,6 +262,7 @@ actor RevenueReporting {
                                                             timestamp = Time.now();
                                                             txId = ?txId;
                                                         });
+                                                        Debug.print("Transfer Success");
                                                     };
                                                     case (#err(e)) {
                                                         // We still proceed even if recording fails
@@ -265,6 +273,7 @@ actor RevenueReporting {
                                                             timestamp = Time.now();
                                                             txId = ?txId;
                                                         });
+                                                        Debug.print("Transfer Def Recorded: " # Nat.toText(txId));
                                                     };
                                                 };
                                             } catch (e) {
@@ -276,6 +285,8 @@ actor RevenueReporting {
                                                     timestamp = Time.now();
                                                     txId = ?txId;
                                                 });
+
+                                                Debug.print("Transfer Failed: " # Error.message(e));
                                             };
                                         };
                                         case (#err(e)) {
@@ -287,6 +298,7 @@ actor RevenueReporting {
                                                 timestamp = Time.now();
                                                 txId = null;
                                             });
+                                            Debug.print("Transfer Failed Recorded: " # debug_show (e));
                                         };
                                     };
                                 } catch (e) {
@@ -298,6 +310,7 @@ actor RevenueReporting {
                                         timestamp = Time.now();
                                         txId = null;
                                     });
+                                    Debug.print("Transfer Faile sad: " # Error.message(e));
                                 };
                             };
                         };
@@ -315,8 +328,8 @@ actor RevenueReporting {
                     distributionTxs = Buffer.toArray(distributionTxs);
                 };
                 revenues.put(revenueId, updatedRevenue);
-
-                return #ok();
+                Debug.print("Revenue distributed successfully");
+                return #ok(updatedRevenue);
             };
         };
     };
@@ -341,18 +354,4 @@ actor RevenueReporting {
         return #ok();
     };
 
-    // Update canister references (for when actual canisters are deployed)
-    public shared (msg) func updateCanisterReferences(
-        msmeCanisterId : Text,
-        nftCanisterId : Text,
-        tokenCanisterId : Text,
-    ) : async Result.Result<(), RevenueError> {
-        if (msg.caller != admin) {
-            return #err(#Unauthorized);
-        };
-
-        // This would update the actor references in a real implementation
-        // For this demo, we'll just return success
-        return #ok();
-    };
 };
