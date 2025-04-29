@@ -15,50 +15,48 @@ actor class Backend() {
     msg.caller;
   };
 
- public type UserRole = {
-        #Admin;
-        #MSME;
-        #Investor;
-        #Verifier;
-    };
-
-    public type UserProfile = {
-        principal : Principal;
-        roles : [UserRole];
-        username : ?Text;
-        email : ?Text;
-        createdAt : Time.Time;
-        lastLogin : ?Time.Time;
-    };
-
-    private var userProfiles = TrieMap.TrieMap<Principal, UserProfile>(Principal.equal, Principal.hash);
-
- public type AuthError = {
-        #NotAuthorized;
-        #ProfileNotFound;
-        #AlreadyExists;
-        #SessionExpired;
-        #InvalidToken;
-        #OperationFailed;
-    };
-
-
- public shared (msg) func registerUser(username : ?Text, email : ?Text, initialRole : UserRole) : async Result.Result<UserProfile, AuthError> {
-  let caller = msg.caller;
-
-
-  let user : UserProfile = {
-    principal = caller;
-    roles = [initialRole];
-    username = username;
-    email = email;
-    createdAt = Time.now();
-    lastLogin = null;
+  public type UserRole = {
+    #Admin;
+    #MSME;
+    #Investor;
+    #Verifier;
   };
-  userProfiles.put(caller, user);
 
-  return #ok(user);
- }
+  public type UserProfile = {
+    principal : Principal;
+    roles : [UserRole];
+    username : ?Text;
+    email : ?Text;
+    createdAt : Time.Time;
+    lastLogin : ?Time.Time;
+  };
+
+  private var userProfiles = TrieMap.TrieMap<Principal, UserProfile>(Principal.equal, Principal.hash);
+
+  public type AuthError = {
+    #NotAuthorized;
+    #ProfileNotFound;
+    #AlreadyExists;
+    #SessionExpired;
+    #InvalidToken;
+    #OperationFailed;
+  };
+
+  public shared (msg) func registerUser(username : ?Text, email : ?Text, initialRole : UserRole) : async Result.Result<UserProfile, AuthError> {
+    let caller = msg.caller;
+
+    let user : UserProfile = {
+      principal = caller;
+      roles = [initialRole];
+      username = username;
+      email = email;
+      createdAt = Time.now();
+      lastLogin = null;
+    };
+    userProfiles.put(caller, user);
+
+    return #ok(user);
+  }
   // Public function to get a user's profile
   // public query func getProfile(userPrincipal : Principal) : async ?UserProfile {
   //   return userProfiles.get(userPrincipal);
