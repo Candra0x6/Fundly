@@ -14,14 +14,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
-import { useRouter } from "next/navigation"
-
+import { useNavigate } from "react-router-dom"
 interface DecisionControlsProps {
   msmeId: string
 }
 
 export function DecisionControls({ msmeId }: DecisionControlsProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [showFlagDialog, setShowFlagDialog] = useState(false)
@@ -31,7 +30,7 @@ export function DecisionControls({ msmeId }: DecisionControlsProps) {
     console.log("Approving MSME:", msmeId)
     setShowApproveDialog(false)
     // Navigate back to dashboard after a short delay
-    setTimeout(() => router.push("/verification-portal"), 500)
+    setTimeout(() => navigate("/verification-portal"), 500)
   }
 
   const handleReject = () => {
@@ -39,7 +38,7 @@ export function DecisionControls({ msmeId }: DecisionControlsProps) {
     console.log("Rejecting MSME:", msmeId)
     setShowRejectDialog(false)
     // Navigate back to dashboard after a short delay
-    setTimeout(() => router.push("/verification-portal"), 500)
+    setTimeout(() => navigate("/verification-portal"), 500)
   }
 
   const handleFlag = () => {
@@ -47,7 +46,7 @@ export function DecisionControls({ msmeId }: DecisionControlsProps) {
     console.log("Flagging MSME for review:", msmeId)
     setShowFlagDialog(false)
     // Navigate back to dashboard after a short delay
-    setTimeout(() => router.push("/verification-portal"), 500)
+    setTimeout(() => navigate("/verification-portal"), 500)
   }
 
   return (
