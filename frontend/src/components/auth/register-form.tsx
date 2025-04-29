@@ -12,9 +12,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle, Info } from "lucide-react"
 import toast from "react-hot-toast"
 import { UserRole } from "@declarations/authentication/authentication.did"
-import { canisterId, createActor, idlFactory } from "@declarations/authentication"
 import { useAuth } from "@/utility/use-auth-client"
-
+import { useTokenActor } from "@/utility/actors/tokenActor"
+import { Principal } from "@dfinity/principal"
 interface RegisterFormProps {
   onSuccess: () => void
 }
@@ -22,25 +22,15 @@ interface RegisterFormProps {
 export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+
   const [role, setRole] = useState("investor")
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [principal, setPrincipal] = useState<string | null>(null)
 
-  console.log(name, email)
-
-  const { identity, authActor } = useAuth()
-  const authentication = createActor(canisterId, {
-    agentOptions: {
-      // @ts-ignore
-      identity,
-    },
-    idlFactory: idlFactory
-  })
+  const { identity, authActor, principal } = useAuth()
+  const tokenActor = useTokenActor()
   // Sekarang Other_backend pakai identity yang benar
 
   useEffect(() => {
@@ -48,13 +38,11 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     const checkAuthentication = async () => {
       try {
         // Try to get the user's profile to check if authenticated
-        const profileResult = await authentication.getMyProfile();
+        const profileResult = await authActor?.getMyProfile();
         if ('ok' in profileResult) {
           setIsAuthenticated(true);
-          setPrincipal(profileResult.ok.principal.toString());
-          console.log("User is authenticated with principal:", profileResult.ok.principal.toString());
         } else {
-          console.log("User not authenticated yet or no profile:", profileResult);
+          toast.error("You must be logged in with Internet Identity to register. We'll attempt to log you in during registration.")
         }
       } catch (err) {
         console.warn("Error checking authentication:", err);
@@ -68,15 +56,12 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     e.preventDefault()
 
     // Validate form
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email) {
       setError("Please fill in all fields")
       return
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
+
 
     if (!agreeTerms) {
       setError("You must agree to the terms and conditions")
@@ -91,37 +76,33 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
       // Determine user role for registration
       let userRole: UserRole;
-      if (role === "investor") {
-        userRole = { Investor: null };
-      } else {
+      if (role === "admin") {
+        userRole = { Admin: null };
+      } else if (role === "msme") {
         userRole = { MSME: null };
+      } else if (role === "verifier") {
+        userRole = { Verifier: null };
+      } else {
+        userRole = { Investor: null };
       }
 
-      console.log("Registering user with role:", role, "userRole:", userRole);
-      console.log("name:", [name], "email:", [email])
       // Register the user
       const registerResult = await authActor?.registerUser(
-        name ? name : "",    // ✅ hanya kirim kalau name ada
-        email ? email : [],  // // Optional email
-        userRole  // Selected role
+        name ? name : "",
+        email ? email : "",
+        userRole
       );
 
-      console.log("Registration result:", registerResult);
 
       if ('err' in registerResult) {
         throw new Error(`Registration failed: ${JSON.stringify(registerResult.err)}`);
       }
+      if (role === "admin") {
+        await tokenActor.setMinter(principal as Principal)
+      }
 
 
 
-      // Show success message and redirect
-      // if (role === "msme") {
-      //   toast.success("Registration successful. As an MSME, you'll need to complete a verification process.");
-      //   window.location.href = "/dashboard/msme";
-      // } else {
-      //   toast.success("Registration successful. Welcome to Fundify!");
-      //   window.location.href = "/dashboard/user";
-      // }
 
       onSuccess();
     } catch (err) {
@@ -137,18 +118,8 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold mb-2">Create an account</h1>
         <p className="text-zinc-500">Join Fundify to start investing or raising funds</p>
-        {principal && (
-          <p className="text-xs text-emerald-600 mt-2">
-            Connected as: {principal.substring(0, 10)}...
-          </p>
-        )}
-      </div>
 
-      <Button onClick={async () => {
-        console.log(await authentication.getMyProfile())
-      }}>
-        Onsl
-      </Button>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <motion.div
@@ -193,30 +164,6 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label>I am registering as</Label>
           <RadioGroup value={role} onValueChange={setRole} className="flex flex-col space-y-1">
             <div className="flex items-center space-x-2 rounded-lg border border-zinc-200 p-3 hover:bg-zinc-50">
@@ -233,15 +180,33 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
                 <div className="text-xs text-zinc-500">I want to raise funds for my business</div>
               </Label>
             </div>
+            <div className="flex items-center space-x-2 rounded-lg border border-zinc-200 p-3 hover:bg-zinc-50">
+              <RadioGroupItem value="verifier" id="verifier" />
+              <Label htmlFor="verifier" className="flex-1 cursor-pointer">
+                <div className="font-medium">Verifier</div>
+                <div className="text-xs text-zinc-500">I want to verify MSMEs and raise funds for them.</div>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 rounded-lg border border-zinc-200 p-3 hover:bg-zinc-50">
+              <RadioGroupItem value="admin" id="admin" />
+              <Label htmlFor="admin" className="flex-1 cursor-pointer">
+                <div className="font-medium">Admin</div>
+                <div className="text-xs text-zinc-500">I want to manage the platform and users.</div>
+              </Label>
+            </div>
           </RadioGroup>
         </div>
 
         <div className="p-3 rounded-lg bg-blue-50 text-blue-600 text-sm flex items-start gap-2">
           <Info className="h-5 w-5 flex-shrink-0" />
           <span>
-            {role === "msme"
-              ? "As an MSME, you'll need to complete a verification process after registration."
-              : "As an Investor, you'll be able to browse and invest in verified MSMEs."}
+            {role === "verifier"
+              ? "As a Verifier, you'll be able to verify MSMEs and raise funds for them."
+              : role === "admin"
+                ? "As an Admin, you'll be able to manage the platform and users."
+                : role === "investor"
+                  ? "As an Investor, you'll be able to browse and invest in verified MSMEs."
+                  : "As an MSME, you'll need to complete a verification process after registration."}
           </span>
         </div>
 
