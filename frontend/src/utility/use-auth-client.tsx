@@ -29,13 +29,22 @@ interface AuthContextType {
   identity: Identity | null;
   principal: Principal | null;
   authActor: ActorSubclass<any> | null;
+  user: UserCredentials | null;
+  setUser: (user: UserCredentials) => void;
 }
 
 // Tipe untuk provider props
-interface AuthProviderProps {
+type AuthProviderProps = {
   children: ReactNode;
 }
 
+export type UserCredentials = {
+  name: string;
+  email: string;
+  role: string;
+  principalAddress: string;
+  identity: Identity | null;
+}
 // Membuat konteks otentikasi
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -78,6 +87,7 @@ export const useAuthClient = (
   const [authActor, setAuthActor] = useState<ActorSubclass<any> | null>(
     null
   );
+  const [user, setUser] = useState<UserCredentials | null>(null);
 
   useEffect(() => {
     AuthClient.create(options.createOptions).then(async (client) => {
@@ -139,6 +149,8 @@ export const useAuthClient = (
     identity,
     principal,
     authActor,
+    user,
+    setUser,
   };
 };
 
