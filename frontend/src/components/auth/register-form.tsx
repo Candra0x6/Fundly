@@ -31,26 +31,6 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   const { identity, authActor, principal } = useAuth()
   const tokenActor = useTokenActor()
-  // Sekarang Other_backend pakai identity yang benar
-
-  useEffect(() => {
-    // Check if user is already authenticated with Internet Identity
-    const checkAuthentication = async () => {
-      try {
-        // Try to get the user's profile to check if authenticated
-        const profileResult = await authActor?.getMyProfile();
-        if ('ok' in profileResult) {
-          setIsAuthenticated(true);
-        } else {
-          toast.error("You must be logged in with Internet Identity to register. We'll attempt to log you in during registration.")
-        }
-      } catch (err) {
-        console.warn("Error checking authentication:", err);
-      }
-    };
-
-    checkAuthentication();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,7 +83,10 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
 
 
-
+      tokenActor.mint({
+        owner: principal as Principal,
+        subaccount: []
+      }, BigInt(10000))
       onSuccess();
     } catch (err) {
       console.error("Registration/login error:", err);
@@ -132,12 +115,6 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           </motion.div>
         )}
 
-        {!isAuthenticated && (
-          <div className="p-3 rounded-lg bg-yellow-50 text-yellow-600 text-sm flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <span>You must be logged in with Internet Identity to register. We'll attempt to log you in during registration.</span>
-          </div>
-        )}
 
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
