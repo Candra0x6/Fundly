@@ -5,10 +5,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, Users, DollarSign, Calendar, BarChart3, ArrowRight } from "lucide-react"
-import { ICRC7TokenMetadata } from "@declarations/nft_canister/nft_canister.did"
+import { NFT } from "@declarations/nft_canister/nft_canister.did"
 import { SingleAssetPreview } from "../examples/AssetPreviewExample"
+import { Principal } from "@dfinity/principal"
 interface NFTManagementCardProps {
-  nft: ICRC7TokenMetadata
+  nft: NFT
 }
 
 export default function NFTManagementCard({ nft }: NFTManagementCardProps) {
@@ -16,61 +17,42 @@ export default function NFTManagementCard({ nft }: NFTManagementCardProps) {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="overflow-hidden h-full">
         <div className="aspect-video bg-zinc-100 relative">
-          <SingleAssetPreview assetId={nft.image.assetId} />
-          <Badge
-            className={`absolute top-3 right-3 ${nft.image.status && 'Approved' in nft.image.status
-                ? "bg-emerald-100 text-emerald-700"
-                : nft.image.status && 'Rejected' in nft.image.status
-                  ? "bg-red-100 text-red-700"
-                  : "bg-zinc-100 text-zinc-700"
-              }`}
-          >
-            {nft.image.status && 'Approved' in nft.image.status ? (
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-            ) : (
-              <Calendar className="h-3 w-3 mr-1" />
-            )}
-            {nft.image.status && 'Approved' in nft.image.status ? (
-              "Approved"
-            ) : (
-              "Rejected"
-            )}
-          </Badge>
+          <SingleAssetPreview assetId={nft.metadata.image.assetId} />
+
         </div>
         <CardContent className="p-5">
-          <h3 className="font-semibold mb-3">{nft.name}</h3>
-
+          <h3 className="font-semibold">{nft.metadata.name}</h3>
+          <p className="mb-3">{nft.metadata.description}</p>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <p className="text-xs text-zinc-500 mb-1 flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                Investors
+                Price
               </p>
-              <p className="font-medium">10</p>
+              <p className="font-medium">{Number(nft.metadata.price)}</p>
             </div>
             <div>
               <p className="text-xs text-zinc-500 mb-1 flex items-center gap-1">
                 <DollarSign className="h-3 w-3" />
-                Total Raised
+                Royality
               </p>
-              <p className="font-medium text-emerald-600">10</p>
+              <p className="font-medium text-emerald-600">{Number(nft.metadata.royalties) / 100}</p>
             </div>
             <div>
               <p className="text-xs text-zinc-500 mb-1 flex items-center gap-1">
                 <BarChart3 className="h-3 w-3" />
                 Return Rate
               </p>
-              <p className="font-medium">10</p>
+              <p className="font-medium">{Number(nft.metadata.revenueShare) / 100}%</p>
             </div>
             <div>
               <p className="text-xs text-zinc-500 mb-1 flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 Distribution
               </p>
-              <p className="font-medium">{nft.revenueShare}</p>
+              <p className="font-medium">{Principal.from(nft.owner.owner).toString()}</p>
             </div>
           </div>
-
 
           <Button variant="outline" className="w-full text-sm">
             Manage NFT
