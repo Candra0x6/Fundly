@@ -38,6 +38,8 @@ import RevenueVerificationPage from "./pages/dashboard/verify/revenue/[id]/page"
 import EditMSMEProfilePage from "./pages/dashboard/msme/profile/page";
 import { RevenueReportingDashboard } from "./examples/RevenueReportingExamples";
 import { VerificationWorkflowDashboard } from "./examples/VerificationWorkflowExamples";
+import MainLayout from "./components/layout/main-layout";
+import TransactionsPage from "./pages/dashboard/[role]/transactions/transactions-page";
 const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -86,21 +88,29 @@ const AnimatedRoutes: React.FC = () => {
           <Routes location={location} key={location.pathname}>
             {/* DEFAULT PAGES SECTION */}
 
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={
+              <MainLayout>
+                <LandingPage />
+              </MainLayout>
+            } />
 
             {/* Auth Pages */}
             <Route
               path="/auth"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <AuthPage />
+                  <MainLayout>
+                    <AuthPage />
+                  </MainLayout>
                 </ProtectedRoute>
               }
             />
             <Route
               path="/internet-identity"
               element={
-                <InternetIdentityPage />
+                <MainLayout>
+                  <InternetIdentityPage />
+                </MainLayout>
               }
             />
 
@@ -108,7 +118,11 @@ const AnimatedRoutes: React.FC = () => {
             <Route
               path="/marketplace"
               element={
-                <MarketplacePage />
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <MainLayout>
+                    <MarketplacePage />
+                  </MainLayout>
+                </ProtectedRoute>
               }
             />
 
@@ -116,26 +130,32 @@ const AnimatedRoutes: React.FC = () => {
             <Route
               path="/msme-registration"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <MSMERegistrationPage />
-                </ProtectedRoute>
+                <MainLayout>
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <MSMERegistrationPage />
+                  </ProtectedRoute>
+                </MainLayout>
               }
             />
             {/* MSME Profile Pages */}
             <Route
               path="/msme/:id"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <MSMEProfilePage />
-                </ProtectedRoute>
+                <MainLayout>
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <MSMEProfilePage />
+                  </ProtectedRoute>
+                </MainLayout>
               }
             />
             <Route
               path="/msme-registration/documents"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <DocumentsPage />
-                </ProtectedRoute>
+                <MainLayout>
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <DocumentsPage />
+                  </ProtectedRoute>
+                </MainLayout>
               }
             />
 
@@ -144,7 +164,9 @@ const AnimatedRoutes: React.FC = () => {
               path="/dashboard/msme"
               element={
                 <DashboardLayout navItems={msmeNavItems}>
-                  <MSMEDashboardPage />
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <MSMEDashboardPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -152,7 +174,9 @@ const AnimatedRoutes: React.FC = () => {
               path="/dashboard/msme/create-nft"
               element={
                 <DashboardLayout navItems={msmeNavItems}>
-                  <CreateNFTPage />
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <CreateNFTPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -160,7 +184,9 @@ const AnimatedRoutes: React.FC = () => {
               path="/dashboard/msme/profile"
               element={
                 <DashboardLayout navItems={msmeNavItems}>
-                  <EditMSMEProfilePage />
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <EditMSMEProfilePage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -169,7 +195,9 @@ const AnimatedRoutes: React.FC = () => {
               path="/m"
               element={
                 <DashboardLayout navItems={msmeNavItems}>
-                  <VerificationWorkflowDashboard />
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <VerificationWorkflowDashboard />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -178,7 +206,9 @@ const AnimatedRoutes: React.FC = () => {
               path="/dashboard/user"
               element={
                 <DashboardLayout navItems={investorNavItems}>
-                  <InvestorDashboardPage />
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <InvestorDashboardPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -187,7 +217,9 @@ const AnimatedRoutes: React.FC = () => {
               path="/dashboard/user/portfolio"
               element={
                 <DashboardLayout navItems={investorNavItems}>
-                  <InvestorPortfolioPage />
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <InvestorPortfolioPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -197,30 +229,47 @@ const AnimatedRoutes: React.FC = () => {
             <Route
               path="/dashboard/verify"
               element={
-                <VerificationDashboardPage />}
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <VerificationDashboardPage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/dashboard/verify/msme/:id"
               element={
-                <MSMEVerificationPage />
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <MSMEVerificationPage />
+                </ProtectedRoute>
               }
             />
             <Route
               path="/dashboard/verify/revenue/:id"
               element={
-                <RevenueVerificationPage />
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <RevenueVerificationPage />
+                </ProtectedRoute>
               }
             />
             {/* Admin Pages */}
             <Route
               path="/dashboard/admin"
               element={
-                <DashboardLayout navItems={adminNavItems}>
-                  <AdminDashboardPage />
-                </DashboardLayout>
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <DashboardLayout navItems={adminNavItems}>
+                    <AdminDashboardPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
               }
             />
 
+            <Route
+              path="/dashboard/:role/transactions"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <TransactionsPage />
+                </ProtectedRoute>
+              }
+            />
             {/* ERROR PAGE SECTION */}
 
             {/* <Route path="*" element={<NotFoundPage />} /> */}
