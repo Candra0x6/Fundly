@@ -17,20 +17,40 @@ import { format } from "date-fns"
 import { useRevenueReporting } from "@/hooks/useRevenueReporting"
 import { getSession } from "@/utility/session"
 import toast from "react-hot-toast"
+import { useFileUpload } from "@/hooks/useFileUpload"
+import { Document } from "@declarations/msme_registration/msme_registration.did"
+import { DocumentType } from "@declarations/nft_canister/nft_canister.did"
 
 interface RevenueReportingFormProps {
   onCancel: () => void
 }
 
 export default function RevenueReportingForm({ onCancel }: RevenueReportingFormProps) {
+  const {
+
+    uploadFile: uploadDocument
+  } = useFileUpload()
+
   const msmeId = getSession("msme_id")
   const { reportRevenue, distributeRevenue } = useRevenueReporting()
   const [date, setDate] = useState<Date>()
-  const [reportData, setReportData] = useState({
-    period: "q3-2023",
+  const [reportData, setReportData] = useState<{
+    revenue: string,
+    description: string,
+    document: Document,
+  }>({
     revenue: "",
-    notes: "",
-    document: null,
+    description: "",
+    document: {
+      id: "",
+      assetId: "",
+      name: "",
+      // @ts-ignore
+      docType: { ImpactReport: null } as DocumentType,
+      assetCanisterId: [],
+      uploadDate: BigInt(0),
+      verified: false,
+    },
   })
 
 
@@ -43,35 +63,60 @@ export default function RevenueReportingForm({ onCancel }: RevenueReportingFormP
     })
   }
 
-  // Handle select change
-  const handleSelectChange = (name: string, value: string) => {
-    setReportData({
-      ...reportData,
-      [name]: value,
-    })
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    docType: string,
+    docName: string,
+  ) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+
+      const result = await uploadDocument(file, {
+        entityId: msmeId,
+        documentType: docType,
+        documentName: docName,
+        description: "",
+      })
+      console.log(result)
+
+      const data: Document = {
+        id: result?.assetId ?? "",
+        assetId: result?.assetId ?? "",
+        name: result?.name ?? "",
+        docType: { ImpactReport: null } as DocumentType,
+        assetCanisterId: [],
+        uploadDate: BigInt(new Date(result?.dateUploaded.toString() ?? "").getTime() ?? 0),
+        verified: false,
+      }
+
+      console.log(data)
+      setReportData((prev) => ({
+        ...prev,
+        document: data
+      }))
+    }
   }
 
-  // Handle form submission
+  // // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     toast.loading("Reporting revenue...")
-    // In a real app, this would submit the revenue data to the backend
-    // Show success message or redirect
-    const result = await reportRevenue(msmeId, BigInt(reportData.revenue), reportData.notes)
+    console.log(reportData)
+    const result = await reportRevenue(msmeId, BigInt(reportData.revenue), reportData.description, reportData.document)
+    // @ts-ignore
     if (result.ok) {
       toast.dismiss()
       toast.success("Revenue reported successfully!")
       toast.loading("Distribute Revenue...")
-      console.log(result.ok)
+      // @ts-ignore
       const distributeResult = await distributeRevenue(result.ok)
+      // @ts-ignore
       if (distributeResult.ok) {
         toast.dismiss()
         toast.success("Revenue distributed successfully!")
-        console.log(distributeResult)
       } else {
         toast.dismiss()
         toast.error("Failed to distribute revenue")
-        console.log(distributeResult)
       }
     } else {
       toast.dismiss()
@@ -88,78 +133,64 @@ export default function RevenueReportingForm({ onCancel }: RevenueReportingFormP
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="period">Reporting Period</Label>
-                <Select value={reportData.period} onValueChange={(value) => handleSelectChange("period", value)}>
-                  <SelectTrigger id="period">
-                    <SelectValue placeholder="Select period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="q1-2023">Q1 2023 (Jan-Mar)</SelectItem>
-                    <SelectItem value="q2-2023">Q2 2023 (Apr-Jun)</SelectItem>
-                    <SelectItem value="q3-2023">Q3 2023 (Jul-Sep)</SelectItem>
-                    <SelectItem value="q4-2023">Q4 2023 (Oct-Dec)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-col">
                 <Label htmlFor="date">Report Date</Label>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <PopoverTrigger>
+                    <Button type="button" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {date ? format(date, "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                    <Calendar mode="single" onSelect={setDate} initialFocus />
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="revenue">Total Revenue (USD)</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
-                <Input
-                  id="revenue"
-                  name="revenue"
-                  type="number"
-                  placeholder="100000"
-                  value={reportData.revenue}
-                  onChange={handleInputChange}
-                  className="pl-10"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="revenue">Total Revenue ($FND)</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
+                  <Input
+                    id="revenue"
+                    name="revenue"
+                    type="number"
+                    placeholder="100000"
+                    onChange={handleInputChange}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
+
             </div>
 
+
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
-                id="notes"
-                name="notes"
+                id="description"
+                name="description"
                 placeholder="Add any additional information about this revenue report"
-                value={reportData.notes}
                 onChange={handleInputChange}
                 className="min-h-[100px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="document">Supporting Document (Optional)</Label>
-              <div className="border-2 border-dashed border-zinc-200 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-300 transition-colors">
+              <Label htmlFor="document">Supporting Document</Label>
+
+              <div className="border-2 border-dashed border-zinc-200 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-300 transition-colors relative">
                 <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center mb-2">
                   <Upload className="h-5 w-5 text-emerald-600" />
                 </div>
                 <p className="font-medium text-center">Upload Document</p>
                 <p className="text-xs text-zinc-500 text-center mt-1">
-                  Drag and drop or click to upload
                   <br />
                   PDF, Excel, or CSV, max 10MB
                 </p>
+                <Input type="file" className=" w-full h-full absolute" onChange={(e) => handleFileUpload(e, "ImpactReport", "Impact Report")} />
               </div>
             </div>
 
