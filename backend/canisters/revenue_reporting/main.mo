@@ -15,6 +15,7 @@ import Error "mo:base/Error";
 import MSMECanister "canister:msme_registration";
 import NFTCanister "canister:nft_canister";
 import TokenCanister "canister:token_canister";
+import Types "../../types";
 actor RevenueReporting {
     // Types
     public type Revenue = {
@@ -25,6 +26,7 @@ actor RevenueReporting {
         reportDate : Time.Time;
         distributed : Bool;
         distributionTxs : [DistributionTx];
+        document : Types.Document;
     };
 
     public type DistributionTx = {
@@ -33,6 +35,7 @@ actor RevenueReporting {
         amount : Nat;
         timestamp : Time.Time;
         txId : ?Nat;
+        category : Text;
     };
 
     public type RevenueError = {
@@ -89,6 +92,7 @@ actor RevenueReporting {
         msmeId : Text,
         amount : Nat,
         description : Text,
+        document : Types.Document,
     ) : async Result.Result<Text, RevenueError> {
         // Verify the caller is the MSME owner
         try {
@@ -99,7 +103,7 @@ actor RevenueReporting {
                         return #err(#Unauthorized);
                     };
                 };
-                case (#err(e)) {
+                case (#err(_e)) {
                     return #err(#MSMENotFound);
                 };
             };
@@ -119,6 +123,7 @@ actor RevenueReporting {
             reportDate = Time.now();
             distributed = false;
             distributionTxs = [];
+            document = document;
         };
 
         // Store the revenue
@@ -144,15 +149,28 @@ actor RevenueReporting {
     };
 
     // Get all revenues for an MSME
-    public query func getMSMERevenues(msmeId : Text) : async [Text] {
-        switch (msmeToRevenues.get(msmeId)) {
-            case (null) { return [] };
-            case (?ids) { return ids };
+    public query func getMSMERevenues(msmeId : Text) : async [Revenue] {
+        let revenueIds = switch (msmeToRevenues.get(msmeId)) {
+            case (null) { [] };
+            case (?ids) { ids };
         };
+
+        let revenueBuffer = Buffer.Buffer<Revenue>(revenueIds.size());
+
+        for (id in revenueIds.vals()) {
+            switch (revenues.get(id)) {
+                case (null) {}; // Skip if not found
+                case (?revenue) {
+                    revenueBuffer.add(revenue);
+                };
+            };
+        };
+
+        return Buffer.toArray(revenueBuffer);
     };
 
     // Distribute revenue to token holders based on ICRC-7 token ownership
-    public shared (msg) func distributeRevenue(revenueId : Text) : async Result.Result<Revenue, RevenueError> {
+    public shared (_msg) func distributeRevenue(revenueId : Text) : async Result.Result<Revenue, RevenueError> {
         switch (revenues.get(revenueId)) {
             case (null) { return #err(#NotFound) };
             case (?revenue) {
@@ -186,7 +204,7 @@ actor RevenueReporting {
                 for (token in tokens.vals()) {
                     let shareOpt = try {
                         await NFTCanister.getRevenueShare(token.id);
-                    } catch (e) {
+                    } catch (_e) {
                         return #err(#ValidationError);
                     };
 
@@ -261,6 +279,7 @@ actor RevenueReporting {
                                                             amount = amount;
                                                             timestamp = Time.now();
                                                             txId = ?txId;
+                                                            category = "distributionTx";
                                                         });
                                                         Debug.print("Transfer Success");
                                                     };
@@ -272,6 +291,7 @@ actor RevenueReporting {
                                                             amount = amount;
                                                             timestamp = Time.now();
                                                             txId = ?txId;
+                                                            category = "distributionTx";
                                                         });
                                                         Debug.print("Transfer Def Recorded: " # Nat.toText(txId));
                                                     };
@@ -284,6 +304,7 @@ actor RevenueReporting {
                                                     amount = amount;
                                                     timestamp = Time.now();
                                                     txId = ?txId;
+                                                    category = "distributionTx";
                                                 });
 
                                                 Debug.print("Transfer Failed: " # Error.message(e));
@@ -297,6 +318,7 @@ actor RevenueReporting {
                                                 amount = amount;
                                                 timestamp = Time.now();
                                                 txId = null;
+                                                category = "distributionTx";
                                             });
                                             Debug.print("Transfer Failed Recorded: " # debug_show (e));
                                         };
@@ -309,6 +331,7 @@ actor RevenueReporting {
                                         amount = amount;
                                         timestamp = Time.now();
                                         txId = null;
+                                        category = "distributionTx";
                                     });
                                     Debug.print("Transfer Faile sad: " # Error.message(e));
                                 };
@@ -326,9 +349,9 @@ actor RevenueReporting {
                     reportDate = revenue.reportDate;
                     distributed = true;
                     distributionTxs = Buffer.toArray(distributionTxs);
+                    document = revenue.document;
                 };
                 revenues.put(revenueId, updatedRevenue);
-                Debug.print("Revenue distributed successfully");
                 return #ok(updatedRevenue);
             };
         };
@@ -344,6 +367,21 @@ actor RevenueReporting {
         };
     };
 
+    // Get all transactions where owner is the recipient
+    public query func getTransactionsByOwner(owner : Principal) : async [DistributionTx] {
+        let buffer = Buffer.Buffer<DistributionTx>(0);
+
+        // Iterate through all revenues to find transactions for this owner
+        for ((_, revenue) in revenues.entries()) {
+            for (tx in revenue.distributionTxs.vals()) {
+                if (tx.recipient.owner == owner) {
+                    buffer.add(tx);
+                };
+            };
+        };
+
+        return Buffer.toArray(buffer);
+    };
     // Admin functions
     public shared (msg) func setAdminPrincipal(newAdmin : Principal) : async Result.Result<(), RevenueError> {
         if (msg.caller != admin) {
