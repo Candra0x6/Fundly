@@ -39,8 +39,6 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
   const [date, setDate] = useState<Date | undefined>(data.foundingDate ? new Date(data.foundingDate) : undefined)
 
   // Get actors
-  const msmeActor = useMsmeActor()
-  const storageActor = useStorageActor()
   const msmeId = getSession("msme_id") || "0"
 
   // Use the new upload hooks
@@ -145,13 +143,17 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
     }
   }
 
-  const businessTypes = [
-    "Sole Proprietorship",
-    "Partnership",
-    "Limited Liability Company (LLC)",
-    "Corporation",
-    "Cooperative",
-    "Non-profit Organization",
+  const focusAreas = [
+    "Telemedicine",
+    "Digital Wallets",
+    "K-12 Online Tutoring",
+    "Crop Monitoring",
+    "Green Construction Materials",
+    "Self-Driving Technology",
+    "Personalized Shopping",
+    "Blockchain Security",
+    "Talent Matching",
+    "Clinical Trial Optimization",
     "Other",
   ]
 
@@ -206,9 +208,9 @@ export function BusinessDetailsForm({ data, updateData }: BusinessDetailsFormPro
                 <SelectValue placeholder="Select business type" />
               </SelectTrigger>
               <SelectContent>
-                {businessTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
+                {focusAreas.map((focusArea) => (
+                  <SelectItem key={focusArea} value={focusArea}>
+                    {focusArea}
                   </SelectItem>
                 ))}
               </SelectContent>
