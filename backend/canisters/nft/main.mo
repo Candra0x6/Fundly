@@ -53,13 +53,14 @@ actor RevenueShareNFT {
 
     public type TransactionId = Nat;
 
-    public type Transaction = {
+    public type NftTx = {
         id : TransactionId;
         timestamp : Time.Time;
         tokenId : TokenId;
         from : Account;
         to : Account;
         memo : ?Blob;
+        category : Text;
     };
 
     public type TransferArgs = {
@@ -138,7 +139,7 @@ actor RevenueShareNFT {
     // Storage
     private var tokens = HashMap.HashMap<TokenId, NFT>(0, Nat.equal, Hash.hash);
     private var ownerships = HashMap.HashMap<Principal, [TokenId]>(0, Principal.equal, Principal.hash);
-    private var transactions = HashMap.HashMap<TransactionId, Transaction>(0, Nat.equal, Hash.hash);
+    private var transactions = HashMap.HashMap<TransactionId, NftTx>(0, Nat.equal, Hash.hash);
     private var msmeToTokens = HashMap.HashMap<Text, [TokenId]>(0, Text.equal, Text.hash);
     private var distributionRecords = HashMap.HashMap<TokenId, [DistributionRecord]>(0, Nat.equal, Hash.hash);
 
@@ -235,13 +236,14 @@ actor RevenueShareNFT {
 
                 // Record transaction
                 let txId = nextTransactionId;
-                let transaction : Transaction = {
+                let transaction : NftTx = {
                     id = txId;
                     timestamp = Time.now();
                     tokenId = args.token_id;
                     from = from;
                     to = args.to;
                     memo = args.memo;
+                    category = "nftTx";
                 };
 
                 transactions.put(txId, transaction);
@@ -745,13 +747,14 @@ actor RevenueShareNFT {
 
                                             // Record transaction
                                             let txId = nextTransactionId;
-                                            let transaction : Transaction = {
+                                            let transaction : NftTx = {
                                                 id = txId;
                                                 timestamp = Time.now();
                                                 tokenId = tokenId;
                                                 from = seller;
                                                 to = buyer;
                                                 memo = null;
+                                                category = "nftTx";
                                             };
 
                                             transactions.put(txId, transaction);
@@ -772,6 +775,18 @@ actor RevenueShareNFT {
                 };
             };
         };
+    };
+
+    public func getTransactionsByOwner(owner : Principal) : async [{
+        transaction : NftTx;
+    }] {
+        let buffer = Buffer.Buffer<{ transaction : NftTx }>(transactions.size());
+        for ((_, transaction) in transactions.entries()) {
+            if (transaction.from.owner == owner) {
+                buffer.add({ transaction = transaction });
+            };
+        };
+        return Buffer.toArray(buffer);
     };
 
     // Get all NFTs owned by a specific user with MSME data
