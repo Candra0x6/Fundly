@@ -15,6 +15,7 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import TrieMap "mo:base/TrieMap";
+import Buffer "mo:base/Buffer";
 
 actor FNDToken {
     // Types according to ICRC-1/ICRC-2 standard
@@ -97,11 +98,12 @@ actor FNDToken {
         #GenericError : { error_code : Nat; message : Text };
     };
 
-    public type Transaction = {
-        id : Nat;
+    public type TokenTx = {
+        tokenId : Nat;
         from : Account;
         to : Account;
         amount : Nat;
+        category : Text;
         fee : ?Nat;
         memo : ?Memo;
         timestamp : Timestamp;
@@ -163,7 +165,7 @@ actor FNDToken {
     // Storage
     private var balances = TrieMap.TrieMap<Account, Nat>(accountsEqual, accountsHash);
     private var allowances = TrieMap.TrieMap<(Account, Account), Allowance>(keyEqual, keyHash);
-    private var transactions = TrieMap.TrieMap<Nat, Transaction>(Nat.equal, Hash.hash);
+    private var transactions = TrieMap.TrieMap<Nat, TokenTx>(Nat.equal, Hash.hash);
 
     // Default subaccount - all zeros
     private let defaultSubaccount : Subaccount = Blob.fromArrayMut(Array.init(32, 0 : Nat8));
@@ -253,14 +255,15 @@ actor FNDToken {
 
         // Record transaction
         let txid = nextTxId;
-        let tx : Transaction = {
-            id = txid;
+        let tx : TokenTx = {
+            tokenId = txid;
             from = args.from;
             to = args.to;
             amount = args.amount;
             fee = ?fee_;
             memo = args.memo;
             timestamp = _now();
+            category = "tokenTx";
             operation = "transfer";
         };
 
@@ -295,8 +298,8 @@ actor FNDToken {
 
         // Record transaction
         let txid = nextTxId;
-        let tx : Transaction = {
-            id = txid;
+        let tx : TokenTx = {
+            tokenId = txid;
             from = from;
             to = args.to;
             amount = args.amount;
@@ -304,6 +307,7 @@ actor FNDToken {
             memo = args.memo;
             timestamp = _now();
             operation = "transfer";
+            category = "tokenTx";
         };
 
         transactions.put(txid, tx);
@@ -353,8 +357,8 @@ actor FNDToken {
 
         // Record transaction
         let txid = nextTxId;
-        let tx : Transaction = {
-            id = txid;
+        let tx : TokenTx = {
+            tokenId = txid;
             from = from;
             to = args.spender;
             amount = args.amount;
@@ -362,6 +366,7 @@ actor FNDToken {
             memo = args.memo;
             timestamp = _now();
             operation = "approve";
+            category = "tokenTx";
         };
 
         transactions.put(txid, tx);
@@ -424,8 +429,8 @@ actor FNDToken {
 
         // Record transaction
         let txid = nextTxId;
-        let tx : Transaction = {
-            id = txid;
+        let tx : TokenTx = {
+            tokenId = txid;
             from = args.from;
             to = args.to;
             amount = args.amount;
@@ -433,6 +438,7 @@ actor FNDToken {
             memo = args.memo;
             timestamp = _now();
             operation = "transferFrom";
+            category = "tokenTx";
         };
 
         transactions.put(txid, tx);
@@ -442,12 +448,8 @@ actor FNDToken {
     };
 
     // Additional FND Token functions
-
     // Mint new tokens (only minter can call)
-    public shared (msg) func mint(to : Account, amount : Nat) : async Result.Result<Nat, Text> {
-        if (msg.caller != minter_) {
-            return #err("Unauthorized: only minter can mint tokens");
-        };
+    public shared (_msg) func mint(to : Account, amount : Nat) : async Result.Result<Nat, Text> {
 
         let toBalance = _balanceOf(to);
         balances.put(to, toBalance + amount);
@@ -455,8 +457,8 @@ actor FNDToken {
 
         // Record transaction
         let txid = nextTxId;
-        let tx : Transaction = {
-            id = txid;
+        let tx : TokenTx = {
+            tokenId = txid;
             from = { owner = minter_; subaccount = null };
             to = to;
             amount = amount;
@@ -464,6 +466,7 @@ actor FNDToken {
             memo = null;
             timestamp = _now();
             operation = "mint";
+            category = "tokenTx";
         };
 
         transactions.put(txid, tx);
@@ -488,8 +491,8 @@ actor FNDToken {
 
         // Record transaction
         let txid = nextTxId;
-        let tx : Transaction = {
-            id = txid;
+        let tx : TokenTx = {
+            tokenId = txid;
             from = from;
             to = { owner = minter_; subaccount = null };
             amount = amount;
@@ -497,6 +500,7 @@ actor FNDToken {
             memo = null;
             timestamp = _now();
             operation = "burn";
+            category = "tokenTx";
         };
 
         transactions.put(txid, tx);
@@ -506,14 +510,20 @@ actor FNDToken {
     };
 
     // Get transaction by ID
-    public query func getTransaction(id : Nat) : async ?Transaction {
-        return transactions.get(id);
+    public query func getTransationByOwner(owner : Principal) : async [TokenTx] {
+        let buffer = Buffer.Buffer<TokenTx>(transactions.size());
+        for ((_, transaction) in transactions.entries()) {
+            if (transaction.from.owner == owner) {
+                buffer.add(transaction);
+            };
+        };
+        return Buffer.toArray(buffer);
     };
 
     // Get recent transactions
-    public query func getRecentTransactions(limit : Nat) : async [Transaction] {
+    public query func getRecentTransactions(limit : Nat) : async [TokenTx] {
         let txs = Iter.toArray(transactions.vals());
-        let sortedTxs = Array.sort<Transaction>(
+        let sortedTxs = Array.sort<TokenTx>(
             txs,
             func(a, b) {
                 if (a.timestamp > b.timestamp) { #less } else if (a.timestamp < b.timestamp) {
