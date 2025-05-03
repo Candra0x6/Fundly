@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useRevenueActor } from '../utility/actors/revanueActor';
 import { Principal } from '@dfinity/principal';
 import { DistributionTx, Revenue, RevenueError } from '@declarations/revenue_reporting/revenue_reporting.did';
+import { Document } from '@declarations/msme_registration/msme_registration.did';
 
 // Types based on the Motoko canister
 
@@ -23,15 +24,16 @@ export function useRevenueReporting() {
    * @param msmeId - The ID of the MSME
    * @param amount - The revenue amount
    * @param description - Description of the revenue
+   * @param document - Document of the revenue
    * @returns Promise with the result
    */
   const reportRevenue = useCallback(
-    async (msmeId: string, amount: bigint, description: string): Promise<Result<string, RevenueError>> => {
+    async (msmeId: string, amount: bigint, description: string, document: Document): Promise<Result<string, RevenueError>> => {
       setLoading(true);
       setError(null);
 
       try {
-        const result = await actor.reportRevenue(msmeId, amount, description);
+        const result = await actor.reportRevenue(msmeId, amount, description, document);
         return result;
       } catch (e) {
         console.error("Failed to report revenue:", e);
@@ -82,7 +84,7 @@ export function useRevenueReporting() {
 
       try {
         const result = await actor.getMSMERevenues(msmeId);
-        return result;
+        return result.map((r) => r.id);
       } catch (e) {
         console.error("Failed to get MSME revenues:", e);
         setError("Failed to get MSME revenues");
