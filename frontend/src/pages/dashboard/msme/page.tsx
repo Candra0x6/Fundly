@@ -9,17 +9,13 @@ import {
   BarChart3,
   Plus,
   FileText,
-  Upload,
   ArrowRight,
-  Download,
   Calendar,
   DollarSign,
   TrendingUp,
   Zap,
   Filter,
-  Search,
 } from "lucide-react";
-import VerificationStatusBanner from "@/components/msme-dashboard/verification-status-banner";
 import NFTManagementCard from "@/components/msme-dashboard/nft-management-card";
 import RevenueReportingForm from "@/components/msme-dashboard/revenue-reporting-form";
 import DocumentCard from "@/components/msme-dashboard/document-card";
@@ -30,145 +26,51 @@ import { getSession } from "@/utility/session";
 import MSMEInfoPage from "@/components/msme-registration/msme-info";
 import { useNftActor } from "@/utility/actors/nftActor";
 import { MSME } from "@declarations/msme_registration/msme_registration.did";
-import { useTokenActor } from "@/utility/actors/tokenActor";
-import { Principal } from "@dfinity/principal";
+import { NFT } from "@declarations/nft_canister/nft_canister.did";
+import { useRevenueActor } from "@/utility/actors/revanueActor";
+import { formatToDisplayData, RevenueData, QuarterlyRevenueData } from "@/utility/converts/formatRevenue";
+import { convertBigNumber } from "@/utility/converts/convertBigNumber";
 
 export default function MSMEDashboardPage() {
   const [showReportingForm, setShowReportingForm] = useState(false);
   const [msme, setMsme] = useState<{ ok: MSME }>()
-  // Mock user data - in a real app, this would come from authentication
-  const user = {
-    name: "Sarah Chen",
-    role: "msme",
-    avatar: "/placeholder.svg?height=40&width=40",
-    company: "GreenTech Solutions",
-    joinDate: "January 2023",
-  };
+  const [nftsData, setNftsData] = useState<NFT[] | null>(null)
+  const [revenueData, setRevenueData] = useState<RevenueData | null>(null)
 
-  // Mock verification status
-  const verificationStatus = {
-    status: "verified", // can be "pending", "verified", "rejected"
-    message:
-      "Your business is verified. You can now create NFTs and report revenue.",
-    lastUpdated: "June 15, 2023",
-    nextReview: "June 15, 2025",
-  };
-
-  // Mock NFT data
-  const nfts = [
-    {
-      id: "1",
-      title: "GreenTech Q3 Revenue Share",
-      image: "/placeholder.svg?height=120&width=200",
-      price: "$5,000",
-      returnRate: "12-15%",
-      timeframe: "Quarterly",
-      raised: "75%",
-      status: "active",
-      investors: 24,
-      totalRaised: "$120,000",
-    },
-    {
-      id: "2",
-      title: "Malaysia Expansion Revenue Share",
-      image: "/placeholder.svg?height=120&width=200",
-      price: "$7,500",
-      returnRate: "15-18%",
-      timeframe: "Bi-annual",
-      raised: "40%",
-      status: "active",
-      investors: 12,
-      totalRaised: "$90,000",
-    },
-    {
-      id: "3",
-      title: "Solar Panel X2 Production Revenue",
-      image: "/placeholder.svg?height=120&width=200",
-      price: "$3,200",
-      returnRate: "10-12%",
-      timeframe: "Monthly",
-      raised: "90%",
-      status: "active",
-      investors: 35,
-      totalRaised: "$112,000",
-    },
-  ];
-
-  // Mock revenue data
-  const revenueData = {
-    totalRevenue: "$1.2M",
-    totalDistributed: "$180K",
-    nextDistribution: "Oct 15, 2023",
-    distributionAmount: "$45K",
-    revenueGrowth: "+15%",
-    quarterlyRevenue: [
-      { quarter: "Q1 2023", revenue: 250000, distributions: 37500 },
-      { quarter: "Q2 2023", revenue: 320000, distributions: 48000 },
-      { quarter: "Q3 2023", revenue: 380000, distributions: 57000 },
-      { quarter: "Q4 2023", revenue: 250000, distributions: 37500 },
-    ],
-  };
-
-  // Mock documents
-  const documents = [
-    {
-      id: "1",
-      title: "Business Registration Certificate",
-      type: "PDF",
-      size: "2.4 MB",
-      uploadDate: "2023-01-15",
-      status: "approved",
-    },
-    {
-      id: "2",
-      title: "Financial Statements (2022)",
-      type: "PDF",
-      size: "5.1 MB",
-      uploadDate: "2023-01-15",
-      status: "approved",
-    },
-    {
-      id: "3",
-      title: "Business Plan",
-      type: "PDF",
-      size: "3.8 MB",
-      uploadDate: "2023-01-15",
-      status: "approved",
-    },
-    {
-      id: "4",
-      title: "Patent Documentation",
-      type: "PDF",
-      size: "7.2 MB",
-      uploadDate: "2023-01-15",
-      status: "approved",
-    },
-  ];
   const msmeActor = useMsmeActor()
   const msmeId = getSession("msme_id")
   const nftActor = useNftActor()
-  const tokenActor = useTokenActor()
+  const revenueActor = useRevenueActor()
+
   useEffect(() => {
     const fetchMSME = async () => {
       const msme = await msmeActor.getMSME(msmeId)
+      // @ts-ignore
       setMsme(msme)
     }
     const fetchNfts = async () => {
       const nfts = await nftActor.getNFTsByMSME(msmeId)
-      const a = await tokenActor.icrc1_balance_of({
-        owner: Principal.fromText("k64yk-lzjxt-j3c5m-ryo5b-34xty-dizlu-hp4yi-fvud4-pdnig-izbpl-sqe"),
-        subaccount: [],
-      })
-      console.log("Admin Balance", a)
+      // @ts-ignore
+      setNftsData(nfts.ok)
+
       console.log(nfts)
     }
+
+    const fetchRevenue = async () => {
+      const revenue = await revenueActor.getMSMERevenues(msmeId)
+      // @ts-ignore
+      const formattedRevenue = formatToDisplayData(revenue)
+      setRevenueData(formattedRevenue)
+    }
+
 
 
     fetchMSME()
     fetchNfts()
+    fetchRevenue()
   }, [msmeId])
 
-  console.log(msme)
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -176,9 +78,6 @@ export default function MSMEDashboardPage() {
         msmeId && msme?.ok ? (
 
           <main className="container mx-auto px-4 py-8">
-            {/* Verification Status Banner */}
-            {/* @ts-ignore */}
-            <VerificationStatusBanner status={verificationStatus} />
 
             {/* Dashboard Overview */}
             <motion.div
@@ -189,34 +88,13 @@ export default function MSMEDashboardPage() {
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                 <div>
-                  <h1 onClick={async () => {
-                    const res = await tokenActor.icrc_spesific_transfer({
-                      from_subaccount: [],
-                      to: {
-                        owner: msme?.ok.details.owner,
-                        subaccount: [],
-                      },
-                      from: {
-                        owner: Principal.fromText("pm57p-zndri-keikz-gtxey-4ocmh-hgj62-neea6-xfrxi-mqj2w-n7s46-vae"),
-                        subaccount: [],
-                      },
-                      amount: BigInt(100000000),
-                      fee: [],
-                      memo: [],
-                      created_at_time: [],
-                    })
-                    console.log(res)
-                  }} className="text-2xl font-bold mb-1">
-                    {user.company} Dashboard
+                  <h1 className="text-2xl font-bold mb-1">
+                    Dashboard
                   </h1>
-                  <p onClick={async () => {
-                    const msme = await msmeActor.getAllMSMEs()
-                    console.log(msme)
-                  }} className="text-zinc-500">
+                  <p className="text-zinc-500">
                     Manage your NFTs, revenue reporting, and business documents
                   </p>
                 </div>
-
               </div>
 
               {/* Key Metrics */}
@@ -229,14 +107,11 @@ export default function MSMEDashboardPage() {
                     </div>
                     <div className="flex items-baseline gap-2">
                       <p className="text-2xl font-bold">
-                        {revenueData.totalRevenue}
+                        {convertBigNumber(Number(msme?.ok.financialInfo.annualRevenue)) + " $FND"}
                       </p>
-                      <span className="text-xs text-emerald-600 flex items-center">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        {revenueData.revenueGrowth}
-                      </span>
+
                     </div>
-                    <p className="text-xs text-zinc-500 mt-1">Year to date</p>
+                    <p className="text-xs text-zinc-500 mt-1">MSME Annual Revenue</p>
                   </CardContent>
                 </Card>
 
@@ -247,7 +122,7 @@ export default function MSMEDashboardPage() {
                       <DollarSign className="h-4 w-4 text-emerald-500" />
                     </div>
                     <p className="text-2xl font-bold">
-                      {revenueData.totalDistributed}
+                      {revenueData?.totalDistributed}
                     </p>
                     <p className="text-xs text-zinc-500 mt-1">To NFT holders</p>
                   </CardContent>
@@ -259,9 +134,8 @@ export default function MSMEDashboardPage() {
                       <p className="text-sm text-zinc-500">Active NFTs</p>
                       <BarChart3 className="h-4 w-4 text-emerald-500" />
                     </div>
-                    <p className="text-2xl font-bold">{nfts.length}</p>
+                    <p className="text-2xl font-bold">{nftsData?.length || 0}</p>
                     <p className="text-xs text-zinc-500 mt-1">
-                      Across {nfts.reduce((acc, nft) => acc + nft.investors, 0)}{" "}
                       investors
                     </p>
                   </CardContent>
@@ -270,14 +144,14 @@ export default function MSMEDashboardPage() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-zinc-500">Next Distribution</p>
+                      <p className="text-sm text-zinc-500">Employees</p>
                       <Calendar className="h-4 w-4 text-emerald-500" />
                     </div>
                     <p className="text-2xl font-bold">
-                      {revenueData.nextDistribution.split(" ")[0]}
+                      {msme?.ok.teamMembers.length}
                     </p>
                     <p className="text-xs text-zinc-500 mt-1">
-                      {revenueData.distributionAmount} estimated
+                      Employees in the company
                     </p>
                   </CardContent>
                 </Card>
@@ -332,20 +206,16 @@ export default function MSMEDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {nfts.map((nft) => (
+                  {nftsData ? nftsData.map((nft) => (
                     <NFTManagementCard key={nft.id} nft={nft} />
-                  ))}
+                  )) : (
+                    <div className="col-span-3 text-center">
+                      <p className="text-zinc-500">No NFTs found</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-6 text-center">
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-1 mx-auto"
-                  >
-                    View All NFTs
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
+
               </TabsContent>
 
               {/* Revenue Reporting Tab */}
@@ -371,7 +241,7 @@ export default function MSMEDashboardPage() {
                         <CardTitle className="text-lg">Revenue Overview</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <RevenueChart data={revenueData.quarterlyRevenue} />
+                        <RevenueChart data={revenueData?.quarterlyRevenue as QuarterlyRevenueData[]} />
                       </CardContent>
                     </Card>
 
@@ -383,7 +253,7 @@ export default function MSMEDashboardPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {revenueData.quarterlyRevenue.map((quarter, index) => (
+                          {revenueData?.quarterlyRevenue.map((quarter, index) => (
                             <div
                               key={index}
                               className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg"
@@ -423,24 +293,11 @@ export default function MSMEDashboardPage() {
               <TabsContent value="documents">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-xl font-semibold">Document Management</h2>
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
-                      <input
-                        type="text"
-                        placeholder="Search documents..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      />
-                    </div>
-                    <Button className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-1">
-                      <Upload className="h-4 w-4 mr-1" />
-                      Upload Document
-                    </Button>
-                  </div>
+
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {documents.map((document) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:grid-rows-2 gap-4">
+                  {msme.ok.documents.map((document) => (
                     <DocumentCard key={document.id} document={document} />
                   ))}
                 </div>
