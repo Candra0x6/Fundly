@@ -1,14 +1,11 @@
 import { useAuth, AuthProvider } from "./utility/use-auth-client";
-import { Principal } from "@dfinity/principal";
 import {
   BrowserRouter,
-  Navigate,
   Route,
   Routes,
   useLocation,
 } from "react-router-dom";
-import { SetStateAction, useEffect, useState } from "react";
-import NotFoundPage from "./pages/NotFoundPage";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Others
@@ -24,9 +21,8 @@ import InternetIdentityPage from "./pages/auth/internet-identity-login";
 import MSMERegistrationPage from "./pages/msme-registration/page";
 import MSMEDashboardPage from "./pages/dashboard/msme/page";
 import DashboardLayout from "./components/layout/dashboard-layout";
-import { BarChart3, Building, Home, Notebook, Store, User2, Wallet } from "lucide-react";
+import { BarChart3, Home, Store, User2 } from "lucide-react";
 import CreateNFTPage from "./pages/dashboard/msme/create-nft/page";
-import CreateMSMEProfilePage from "./pages/dashboard/msme/profile/page";
 import InvestorDashboardPage from "./pages/dashboard/user/page";
 import InvestorPortfolioPage from "./pages/dashboard/user/portofolio/page";
 import AdminDashboardPage from "./pages/dashboard/admin/page";
@@ -36,10 +32,12 @@ import VerificationDashboardPage from "./pages/dashboard/verify/page";
 import MSMEVerificationPage from "./pages/dashboard/verify/msme/[id]/page";
 import RevenueVerificationPage from "./pages/dashboard/verify/revenue/[id]/page";
 import EditMSMEProfilePage from "./pages/dashboard/msme/profile/page";
-import { RevenueReportingDashboard } from "./examples/RevenueReportingExamples";
 import { VerificationWorkflowDashboard } from "./examples/VerificationWorkflowExamples";
 import MainLayout from "./components/layout/main-layout";
 import TransactionsPage from "./pages/dashboard/[role]/transactions/transactions-page";
+import { getSession } from "./utility/session";
+import InvestorProfilePage from "./pages/dashboard/user/profile/page";
+import ProfileEditPage from "./pages/dashboard/user/profile/edit/page";
 const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,6 +74,21 @@ const AnimatedRoutes: React.FC = () => {
   const adminNavItems = [
     { path: "/dashboard/admin", label: "Dashboard", icon: Home },
   ]
+  const user = getSession("user")
+
+
+  let role: string = "user"; // Default role
+
+  // Determine the actual role based on session structure {MSME: null}, {Investor: null}, {Admin: null}
+  if (user?.role && "MSME" in user.role) {
+    role = "msme";
+  } else if (user?.role && "Investor" in user.role) {
+    role = "user";
+  } else if (user?.role && "Admin" in user.role) {
+    role = "admin";
+  } else if (user?.role && "Verify" in user.role) {
+    role = "verify";
+  }
   return (
     <>
 
@@ -224,7 +237,16 @@ const AnimatedRoutes: React.FC = () => {
               }
             />
 
-
+            <Route
+              path="/dashboard/user/profile/edit"
+              element={
+                <DashboardLayout navItems={investorNavItems}>
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <ProfileEditPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
             {/* Verify Dashboard */}
             <Route
               path="/dashboard/verify"
@@ -261,15 +283,31 @@ const AnimatedRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/dashboard/:role/transactions"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <TransactionsPage />
+                  <DashboardLayout navItems={role === "user" ? investorNavItems : role === "msme" ? msmeNavItems : role === "admin" ? adminNavItems : []}>
+
+                    <TransactionsPage />
+                  </DashboardLayout>
                 </ProtectedRoute>
               }
             />
+
+            {/* User Profile Pages */}
+            <Route
+              path="/dashboard/user/profile"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <DashboardLayout navItems={investorNavItems}>
+                    <InvestorProfilePage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+
             {/* ERROR PAGE SECTION */}
 
             {/* <Route path="*" element={<NotFoundPage />} /> */}
