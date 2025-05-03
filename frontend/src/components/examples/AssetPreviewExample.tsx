@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export function SingleAssetPreview({ assetId, className, previewUrlState }: { assetId: string, className?: string, previewUrlState?: string }) {
   const { previewUrl, isLoading, progress } = useAssetPreview(assetId);
   return (
-    <div className="relative">
+    <div className="relative h-full w-full">
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 rounded-md">
           <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-2"></div>
