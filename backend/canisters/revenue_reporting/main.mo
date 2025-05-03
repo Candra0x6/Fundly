@@ -81,6 +81,11 @@ actor RevenueReporting {
         #GenericError : { error_code : Nat; message : Text };
     };
 
+    public type TransactionWithRevenue = {
+        transaction : DistributionTx;
+        revenue : Revenue;
+    };
+
     // State variables
     private var revenues = HashMap.HashMap<Text, Revenue>(0, Text.equal, Text.hash);
     private var msmeToRevenues = HashMap.HashMap<Text, [Text]>(0, Text.equal, Text.hash);
@@ -376,6 +381,24 @@ actor RevenueReporting {
             for (tx in revenue.distributionTxs.vals()) {
                 if (tx.recipient.owner == owner) {
                     buffer.add(tx);
+                };
+            };
+        };
+
+        return Buffer.toArray(buffer);
+    };
+
+    public query func getTransactionsWithRevenueByOwner(owner : Principal) : async [TransactionWithRevenue] {
+        let buffer = Buffer.Buffer<TransactionWithRevenue>(0);
+
+        // Iterate through all revenues to find transactions for this owner
+        for ((id, revenue) in revenues.entries()) {
+            for (tx in revenue.distributionTxs.vals()) {
+                if (tx.recipient.owner == owner) {
+                    buffer.add({
+                        transaction = tx;
+                        revenue = revenue;
+                    });
                 };
             };
         };
