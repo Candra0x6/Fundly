@@ -67,10 +67,11 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
       }
 
       // Register the user
-      const registerResult = await authActor?.registerUser(
+      const registerResult = await authActor.registerUser(
         name ? name : "",
         email ? email : "",
-        userRole
+        userRole,
+
       );
 
 
