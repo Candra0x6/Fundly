@@ -1,11 +1,11 @@
 "use client"
 
-import { useCallback, useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { RegistrationLayout } from "@/components/msme-registration/registration-layout"
 import { BusinessDetailsForm, BusinessDetailsFormData } from "@/components/msme-registration/business-details-form"
 import { ContactInformationForm, ContactInformationFormData } from "@/components/msme-registration/contact-information-form"
 import { TeamMember, TeamMembersForm } from "@/components/msme-registration/team-members-form"
-import { Document, DocumentUploadForm } from "@/components/msme-registration/document-upload-form"
+import { Document } from "@/components/msme-registration/document-upload-form"
 import { RegistrationReview } from "@/components/msme-registration/registration-review"
 import { Button } from "@/components/ui/button"
 import toast from "react-hot-toast"
@@ -17,7 +17,7 @@ import { getSession, setSession } from "@/utility/session"
 import { UserRole } from "@declarations/authentication/authentication.did"
 import { useNavigate } from "react-router-dom"
 import { Principal } from "@dfinity/principal"
-
+import { useTokenActor } from "@/utility/actors/tokenActor"
 // Define types for form data
 export interface MSMERegistrationFormData {
   businessDetails: BusinessDetailsFormData
@@ -29,6 +29,7 @@ export interface MSMERegistrationFormData {
 
 export default function MSMERegistrationPage() {
   const msmeActor = useMsmeActor()
+  const tokenActor = useTokenActor()
   const { principal } = useAuth()
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
@@ -221,10 +222,13 @@ export default function MSMERegistrationPage() {
         { MSME: null } as unknown as UserRole
       );
 
-      console.log("Registration result:", registrationResult);
 
       if ('ok' in registrationResult) {
         setSession("msme_id", registrationResult.ok);
+        tokenActor.mint({
+          owner: principal as Principal,
+          subaccount: []
+        }, BigInt(formData.financialInformation.annualRevenue))
         toast.success("MSME registered successfully!");
         navigate("/msme-registration/documents");
       } else {
@@ -276,7 +280,7 @@ export default function MSMERegistrationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pt-20">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">MSME Registration</h1>
