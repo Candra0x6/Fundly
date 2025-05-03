@@ -96,7 +96,7 @@ export default function BasicInfoEditor({ details, onUpdate }: BasicInfoEditorPr
           id: result.assetId,
           name: result.name,
           docType: { Other: "BusinessLogo" },
-          assetCanisterId: null,
+          assetCanisterId: [],
           assetId: result.assetId,
           uploadDate: BigInt(new Date().getTime()),
           verified: false
@@ -122,7 +122,7 @@ export default function BasicInfoEditor({ details, onUpdate }: BasicInfoEditorPr
           id: result.assetId,
           name: result.name,
           docType: { Other: "BusinessCoverImage" },
-          assetCanisterId: null,
+          assetCanisterId: [],
           assetId: result.assetId,
           uploadDate: BigInt(new Date().getTime()),
           verified: false
