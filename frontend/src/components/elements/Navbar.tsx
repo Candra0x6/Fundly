@@ -2,6 +2,7 @@ import { Button } from '../ui/button'
 import logo from '@/assets/logo.svg'
 import { useAuth } from '@/utility/use-auth-client'
 import { useNavigate } from 'react-router-dom'
+import WalletMenu from './WalletMenu'
 function Navbar() {
   // TODO wallet identity
   const navigate = useNavigate()
@@ -24,10 +25,7 @@ function Navbar() {
             Marketplace
           </a>
         </nav>
-        {isAuthenticated ? <div className="flex items-center gap-3 ">
-
-          <Button className="bg-emerald-500 hover:bg-emerald-600 text-sm rounded-[0.5rem]" onClick={() => navigate('/auth')}>Login</Button>
-        </div> : <div className="flex items-center gap-3 ">
+        {isAuthenticated ? <WalletMenu /> : <div className="flex items-center gap-3 ">
           <Button className="bg-emerald-500 hover:bg-emerald-600 text-sm rounded-[0.5rem]" onClick={() => navigate('/auth')}>Login</Button>
         </div>}
       </div>
