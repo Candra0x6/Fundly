@@ -15,7 +15,6 @@ import Time "mo:base/Time";
 import Types "../../types/lib";
 import Buffer "mo:base/Buffer";
 // Import canister for token interaction
-import IC "mo:base/ExperimentalInternetComputer";
 import Debug "mo:base/Debug";
 import MSMECanister "canister:msme_registration";
 import TokenCanister "canister:token_canister";
