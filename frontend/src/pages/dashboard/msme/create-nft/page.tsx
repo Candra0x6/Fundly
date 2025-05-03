@@ -11,13 +11,6 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   ArrowLeft,
   Upload,
   ImageIcon,
@@ -36,8 +29,9 @@ import { getSession } from "@/utility/session";
 import { uploadMSMEDocument } from "@/utility/uploadFile";
 import { useMsmeActor } from "@/utility/actors/msmeActor";
 import { useNftActor } from "@/utility/actors/nftActor";
-import { Document, DocumentStatus } from "@declarations/nft_canister/nft_canister.did";
+import { Document } from "@declarations/nft_canister/nft_canister.did";
 import { DocumentType } from "@declarations/msme_registration/msme_registration.did";
+import { DocumentStatus } from "@declarations/verification_workflow/verification_workflow.did";
 // Custom Document type for NFT images
 interface NFTDocument {
   id: string;
@@ -161,7 +155,6 @@ export default function CreateNFTPage() {
           name: "NFT Image",
           uploadDate: BigInt(Date.now()),
           verified: true,
-          status: { Approved: null } as DocumentStatus,
         },
         imageUrl: croppedImage,
       });
