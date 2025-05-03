@@ -9,82 +9,58 @@ import MSMERoadmap from "@/components/msme/msme-roadmap"
 import MSMEGallery from "@/components/msme/msme-gallery"
 import MSMENFTs from "@/components/msme/msme-nfts"
 import MSMEDocuments from "@/components/msme/msme-documents"
-import MSMEVerification from "@/components/msme/msme-verification"
 import { useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useMsmeActor } from "@/utility/actors/msmeActor"
+import { MSME } from "@declarations/msme_registration/msme_registration.did"
+import MSMELoading from "@/components/skeleton/msme-loading"
+import { SingleAssetPreview } from "@/components/examples/AssetPreviewExample"
+import { convertBigNumber } from "@/utility/converts/convertBigNumber"
 
 export default function MSMEProfilePage() {
-  // This would normally be fetched from an API based on the ID
   const params = useParams();
+  const msmeActor = useMsmeActor()
+  const [msme, setMsme] = useState<MSME | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const msme = {
-    id: params.id,
-    name: "GreenTech Solutions",
-    logo: "/placeholder.svg?height=120&width=120",
-    coverImage: "/placeholder.svg?height=400&width=1200",
-    industry: "Renewable Energy",
-    location: "Singapore",
-    founded: "2018",
-    verified: true,
-    verificationDate: "June 15, 2023",
-    description:
-      "GreenTech Solutions is a leading provider of affordable solar solutions for residential buildings in Southeast Asia. Our mission is to make renewable energy accessible to all and contribute to a sustainable future.",
-    website: "https://greentechsolutions.example",
-    socialLinks: {
-      linkedin: "https://linkedin.com/company/greentechsolutions",
-      twitter: "https://twitter.com/greentechsolutions",
-      facebook: "https://facebook.com/greentechsolutions",
-    },
-    stats: {
-      totalRaised: "$1.2M",
-      activeNFTs: 3,
-      investors: 245,
-      avgReturn: "12.5%",
-    },
-    tags: ["Solar Energy", "Sustainability", "Clean Tech", "Residential", "B2C"],
+  useEffect(() => {
+    const fetchMsme = async () => {
+      setLoading(true)
+      try {
+        const result = await msmeActor.getMSME(params.id as string)
+        if ("ok" in result) {
+          setMsme(result.ok)
+        }
+      } catch (error) {
+        console.error("Error fetching MSME:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchMsme()
+  }, [])
+
+  if (loading) {
+    return <MSMELoading />
   }
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-zinc-100">
-        <div className="container mx-auto py-4 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center">
-              <span className="text-white font-bold">FND</span>
-            </div>
-            <span className="font-semibold text-xl">Fundify</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="/" className="text-sm font-medium text-zinc-600 hover:text-emerald-600 transition-colors">
-              Home
-            </a>
-            <a href="#" className="text-sm font-medium text-zinc-600 hover:text-emerald-600 transition-colors">
-              How It Works
-            </a>
-            <a href="#" className="text-sm font-medium text-zinc-600 hover:text-emerald-600 transition-colors">
-              For MSMEs
-            </a>
-            <a
-              href="/marketplace"
-              className="text-sm font-medium text-zinc-600 hover:text-emerald-600 transition-colors"
-            >
-              Marketplace
-            </a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-sm">
-              Log In
-            </Button>
-            <Button className="bg-emerald-500 hover:bg-emerald-600 text-sm">Register</Button>
-          </div>
+  if (!msme) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">MSME Not Found</h2>
+          <p className="text-zinc-500">The MSME you're looking for doesn't exist or has been removed.</p>
         </div>
-      </header>
+      </div>
+    )
+  }
+  return (
+    <div className="min-h-screen bg-white pt-16 ">
 
       {/* Cover Image */}
       <div className="w-full h-64 bg-zinc-100 relative">
-        <img
-          src={msme.coverImage || "/placeholder.svg"}
-          alt={`${msme.name} cover`}
+        <SingleAssetPreview
+          assetId={msme.details.coverImage?.assetId}
           className="w-full h-full object-cover"
         />
       </div>
@@ -96,12 +72,15 @@ export default function MSMEProfilePage() {
             {/* Logo and Basic Info */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               <div className="h-24 w-24 rounded-xl bg-white border border-zinc-200 shadow-sm overflow-hidden flex-shrink-0">
-                <img src={msme.logo || "/placeholder.svg"} alt={msme.name} className="w-full h-full object-cover" />
+                <SingleAssetPreview
+                  assetId={msme.details.logo?.assetId}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold">{msme.name}</h1>
-                  {msme.verified && (
+                  <h1 className="text-2xl font-bold">{msme.details.name}</h1>
+                  {"Verified" in msme.verificationStatus && (
                     <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
                       Verified
@@ -111,25 +90,25 @@ export default function MSMEProfilePage() {
                 <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500 mb-3">
                   <div className="flex items-center gap-1">
                     <Building className="h-4 w-4" />
-                    <span>{msme.industry}</span>
+                    <span>{msme.details.focusArea}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
-                    <span>{msme.location}</span>
+                    <span>{msme.contactInfo.city}, {msme.contactInfo.country}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>Founded {msme.founded}</span>
+                    <span>Founded {new Date(Number(msme.details.foundingDate) / 1000000).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {msme.tags.map((tag, index) => (
+                  {msme.details.industry.map((industry, index) => (
                     <Badge key={index} variant="outline" className="bg-zinc-50">
-                      {tag}
+                      {industry}
                     </Badge>
                   ))}
                 </div>
-                <p className="text-zinc-600 max-w-3xl">{msme.description}</p>
+                <p className="text-zinc-600 max-w-3xl">{msme.details.description}</p>
               </div>
             </div>
 
@@ -137,20 +116,20 @@ export default function MSMEProfilePage() {
             <div className="md:ml-auto flex flex-col items-end justify-between">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
                 <div className="bg-zinc-50 p-3 rounded-lg text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Total Raised</p>
-                  <p className="font-bold text-emerald-600">{msme.stats.totalRaised}</p>
+                  <p className="text-xs text-zinc-500 mb-1">Annual Revenue</p>
+                  <p className="font-bold text-emerald-600">${convertBigNumber(Number(msme.financialInfo.annualRevenue) / 1000)}</p>
                 </div>
                 <div className="bg-zinc-50 p-3 rounded-lg text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Active NFTs</p>
-                  <p className="font-bold">{msme.stats.activeNFTs}</p>
+                  <p className="text-xs text-zinc-500 mb-1">Employees</p>
+                  <p className="font-bold">{Number(msme.financialInfo.employeeCount)}</p>
                 </div>
                 <div className="bg-zinc-50 p-3 rounded-lg text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Investors</p>
-                  <p className="font-bold">{msme.stats.investors}</p>
+                  <p className="text-xs text-zinc-500 mb-1">Funding Goal</p>
+                  <p className="font-bold">${convertBigNumber(Number(msme.financialInfo.fundingGoal) / 1000)}</p>
                 </div>
                 <div className="bg-zinc-50 p-3 rounded-lg text-center">
-                  <p className="text-xs text-zinc-500 mb-1">Avg. Return</p>
-                  <p className="font-bold text-emerald-600">{msme.stats.avgReturn}</p>
+                  <p className="text-xs text-zinc-500 mb-1">Registration Date</p>
+                  <p className="font-bold text-emerald-600">{new Date(Number(msme.registrationDate) / 1000000).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="flex gap-2 mt-4 md:mt-0">
@@ -162,10 +141,12 @@ export default function MSMEProfilePage() {
                   <Bookmark className="h-4 w-4" />
                   Save
                 </Button>
-                <Button className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-1" size="sm">
-                  <ArrowUpRight className="h-4 w-4" />
-                  Website
-                </Button>
+                {msme.contactInfo.website[0] && (
+                  <Button className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-1" size="sm">
+                    <ArrowUpRight className="h-4 w-4" />
+                    Website
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -197,136 +178,41 @@ export default function MSMEProfilePage() {
             <TabsTrigger value="documents" className="rounded-md data-[state=active]:bg-white">
               Documents
             </TabsTrigger>
-            <TabsTrigger value="verification" className="rounded-md data-[state=active]:bg-white">
-              Verification
-            </TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="overview">
-            <MSMEOverview msmeId={msme.id || ""} />
+            <MSMEOverview msme={msme} />
           </TabsContent>
 
           <TabsContent value="financials">
-            <MSMEFinancials msmeId={msme.id || ""} />
+            <MSMEFinancials msme={msme} />
           </TabsContent>
 
           <TabsContent value="team">
-            <MSMETeam msmeId={msme.id || ""} />
+            <MSMETeam msme={msme} />
           </TabsContent>
 
           <TabsContent value="roadmap">
-            <MSMERoadmap msmeId={msme.id || ""} />
+            <MSMERoadmap msme={msme} />
           </TabsContent>
 
           <TabsContent value="gallery">
-            <MSMEGallery msmeId={msme.id || ""} />
+            <MSMEGallery msme={msme} />
           </TabsContent>
 
           <TabsContent value="nfts">
-            <MSMENFTs msmeId={msme.id || ""} />
+            <MSMENFTs msme={msme} />
           </TabsContent>
 
           <TabsContent value="documents">
-            <MSMEDocuments msmeId={msme.id || ""} />
+            <MSMEDocuments msme={msme} />
           </TabsContent>
 
-          <TabsContent value="verification">
-            <MSMEVerification msmeId={msme.id || ""} />
-          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-zinc-900 text-zinc-400 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center">
-                  <span className="text-white font-bold">FND</span>
-                </div>
-                <span className="font-semibold text-xl text-white">Fundify</span>
-              </div>
-              <p className="text-sm mb-4">
-                Connecting MSMEs with investors through tokenized revenue sharing opportunities.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white font-medium mb-4">Platform</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    How It Works
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    For MSMEs
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    For Investors
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Marketplace
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white font-medium mb-4">Resources</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    FAQs
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white font-medium mb-4">Contact</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Support
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Partnerships
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-zinc-800 mt-12 pt-8 text-sm text-center">
-            <p>© 2025 Fundify. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+
     </div>
   )
 }
