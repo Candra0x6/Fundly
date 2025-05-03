@@ -14,6 +14,7 @@ import { ActorSubclass, Identity } from "@dfinity/agent"; // Tambahan untuk memp
 import { Principal } from "@dfinity/principal";
 import toast from "react-hot-toast";
 import { canisterId, createActor } from "@declarations/authentication";
+import { _SERVICE, UserRole } from "@declarations/authentication/authentication.did";
 // Tipe untuk Opsi Auth
 interface AuthOptions {
   createOptions?: AuthClientCreateOptions;
@@ -28,7 +29,7 @@ interface AuthContextType {
   authClient: AuthClient | null;
   identity: Identity | null;
   principal: Principal | null;
-  authActor: ActorSubclass<any> | null;
+  authActor: ActorSubclass<_SERVICE>;
   user: UserCredentials | null;
   setUser: (user: UserCredentials) => void;
 }
@@ -41,7 +42,7 @@ type AuthProviderProps = {
 export type UserCredentials = {
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   principalAddress: string;
   identity: Identity | null;
 }
