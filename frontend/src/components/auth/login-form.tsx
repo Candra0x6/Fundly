@@ -54,7 +54,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
           email: profileCheck.ok.email,
           role: profileCheck.ok.roles[0],
           principalAddress: profileCheck.ok.principal.toText(),
-          identity: identity
+          identity: identity,
         }
 
         setUser(userData)
