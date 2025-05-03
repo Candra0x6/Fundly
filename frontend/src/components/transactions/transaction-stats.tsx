@@ -56,7 +56,7 @@ export default function TransactionStats({ transactions }: TransactionStatsProps
           <DollarSign className="h-4 w-4 text-zinc-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${totalVolume.toLocaleString()}</div>
+          <div className="text-2xl font-bold">${Number(totalVolume) / 1000}</div>
           <p className="text-xs text-zinc-500">Across all transaction types</p>
         </CardContent>
       </Card>
@@ -66,7 +66,7 @@ export default function TransactionStats({ transactions }: TransactionStatsProps
           <ArrowDown className="h-4 w-4 text-emerald-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-emerald-600">${incoming.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-emerald-600">${Number(incoming) / 1000}</div>
           <p className="text-xs text-zinc-500">Total received</p>
         </CardContent>
       </Card>
@@ -76,7 +76,7 @@ export default function TransactionStats({ transactions }: TransactionStatsProps
           <ArrowUp className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">${outgoing.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-red-600">${Number(outgoing) / 1000}</div>
           <p className="text-xs text-zinc-500">Total sent</p>
         </CardContent>
       </Card>
