@@ -13,6 +13,7 @@ interface AssetPreviewResult {
   isLoading: boolean;
   progress: number;
   fileInfo: FileInfo;
+  downloadFile: () => void;
 }
 
 export const useAssetPreview = (assetId: string | string[] | null, documentName?: string | null): AssetPreviewResult => {
@@ -166,10 +167,83 @@ export const useAssetPreview = (assetId: string | string[] | null, documentName?
     loadFirstValidAsset();
   }, [assetId]);
 
+  const downloadFile = () => {
+    if (!fileInfo.blob || !fileInfo.fileName) {
+      toast.error("No file available to download");
+      return;
+    }
+
+    try {
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(fileInfo.blob);
+
+      // Create a temporary anchor element
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileInfo.fileName;
+
+      // Append to the document and trigger click
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Downloading ${fileInfo.fileName}`);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast.error("Failed to download file");
+    }
+  };
+
+  useEffect(() => {
+    // Check if assetId has changed
+    const hasAssetIdChanged = assetId !== previousAssetId;
+    setPreviousAssetId(assetId);
+
+    const loadFirstValidAsset = async () => {
+      if (!assetId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        // If the assetId has changed and is likely a new upload, add a short delay
+        // to allow the backend to fully process the asset
+        if (hasAssetIdChanged) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Handle both single assetId and array of assetIds
+        const assetIds = Array.isArray(assetId) ? assetId : [assetId];
+
+        // Try to load assets in order until one succeeds
+        for (const id of assetIds) {
+          const info = await loadAsset(id);
+          if (info) {
+            setFileInfo(info);
+            createPreviewUrl(info);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error("Error in useAssetPreview:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFirstValidAsset();
+  }, [assetId]);
+
   return {
     previewUrl,
     isLoading,
     progress,
-    fileInfo
+    fileInfo,
+    downloadFile
   };
 };
