@@ -13,6 +13,7 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import TrieMap "mo:base/TrieMap";
+import Types "../../types";
 
 actor Authentication {
     // Types
@@ -28,6 +29,7 @@ actor Authentication {
         roles : [UserRole];
         username : Text;
         email : Text;
+        image : ?Types.Document;
         createdAt : Time.Time;
         lastLogin : ?Time.Time;
     };
@@ -95,6 +97,7 @@ actor Authentication {
                         principal = caller;
                         roles = [initialRole];
                         username = username;
+                        image = null;
                         email = email;
                         createdAt = Time.now();
                         lastLogin = null;
@@ -111,6 +114,7 @@ actor Authentication {
                     principal = caller;
                     roles = [initialRole];
                     username = username;
+                    image = null;
                     email = email;
                     createdAt = Time.now();
                     lastLogin = null;
@@ -140,7 +144,7 @@ actor Authentication {
         };
     };
 
-    public shared (msg) func updateProfile(username : Text, email : Text) : async Result.Result<UserProfile, AuthError> {
+    public shared (msg) func updateProfile(username : Text, email : Text, image : ?Types.Document) : async Result.Result<UserProfile, AuthError> {
         let caller = msg.caller;
 
         if (Principal.equal(caller, ANON_PRINCIPAL)) {
@@ -154,6 +158,7 @@ actor Authentication {
                     roles = profile.roles;
                     username = username;
                     email = email;
+                    image = image;
                     createdAt = profile.createdAt;
                     lastLogin = profile.lastLogin;
                 };
@@ -187,6 +192,7 @@ actor Authentication {
                         email = existingProfile.email;
                         createdAt = existingProfile.createdAt;
                         lastLogin = ?Time.now();
+                        image = existingProfile.image;
                     }; // This closing brace was missing
                     userProfiles.put(caller, updatedProfile);
                     updatedProfile;
@@ -272,6 +278,7 @@ actor Authentication {
                     email = profile.email;
                     createdAt = profile.createdAt;
                     lastLogin = profile.lastLogin;
+                    image = profile.image;
                 };
 
                 userProfiles.put(targetPrincipal, updatedProfile);
@@ -314,6 +321,7 @@ actor Authentication {
                     email = profile.email;
                     createdAt = profile.createdAt;
                     lastLogin = profile.lastLogin;
+                    image = profile.image;
                 };
 
                 userProfiles.put(targetPrincipal, updatedProfile);
@@ -413,6 +421,7 @@ actor Authentication {
                         email = profile.email;
                         createdAt = profile.createdAt;
                         lastLogin = profile.lastLogin;
+                        image = profile.image;
                     };
 
                     userProfiles.put(newAdmin, updatedProfile);
@@ -427,6 +436,7 @@ actor Authentication {
                     email = "";
                     createdAt = Time.now();
                     lastLogin = null;
+                    image = null;
                 };
 
                 userProfiles.put(newAdmin, newProfile);
