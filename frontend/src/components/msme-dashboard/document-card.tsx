@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Download, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { Document } from "@declarations/msme_registration/msme_registration.did"
+import { useAssetPreview } from "@/hooks/useAssetPreview"
 
 
 export default function DocumentCard({ document }: { document: Document }
 ) {
-  console.log(document)
+  const { downloadFile } = useAssetPreview(document.assetId)
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <Card className="h-full">
@@ -42,7 +43,7 @@ export default function DocumentCard({ document }: { document: Document }
                 <span className="mx-1">•</span>
                 <span>Uploaded {new Date(Number(document.uploadDate / 1000000n)).toLocaleDateString()}</span>
               </div>
-              <Button variant="ghost" size="sm" className="mt-2 h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="mt-2 h-8 w-8 p-0" onClick={() => downloadFile()}>
                 <Download className="h-4 w-4" />
               </Button>
             </div>
