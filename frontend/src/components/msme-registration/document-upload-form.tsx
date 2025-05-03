@@ -318,7 +318,7 @@ export function DocumentUploadForm() {
     } finally {
       setStatus('');
       setSubmitting(false);
-      navigate("/dashboard/msme")
+      window.location.href = "/dashboard/msme"
     }
   }
 
