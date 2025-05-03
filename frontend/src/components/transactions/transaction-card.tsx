@@ -76,7 +76,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
           </div>
 
           <div className="text-right">
-            {"amount" in transaction && <div className="font-semibold">${transaction.amount.toLocaleString()}</div>}
+            {"amount" in transaction && <div className="font-semibold">${Number(transaction.amount) / 1000}</div>}
             <div className="text-xs text-zinc-500">
               {transaction.category === "nftTx" && `Token #${transaction.tokenId}`}
               {transaction.category === "distributionTx" && `Token #${transaction.tokenId}`}
