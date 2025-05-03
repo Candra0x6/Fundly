@@ -20,6 +20,7 @@ import { useAuth } from "@/utility/use-auth-client"
 import { getSession } from "@/utility/session"
 import { BusinessDetails, ContactInfo, Document, FinancialInfo, Gallery, MSME, MSMEUpdateArgs, Overview, Roadmap, TeamMember } from "@declarations/msme_registration/msme_registration.did"
 import { Principal } from "@dfinity/principal"
+import toast from "react-hot-toast"
 
 
 export default function EditMSMEProfilePage() {
@@ -86,14 +87,14 @@ export default function EditMSMEProfilePage() {
       const result = await msmeActor.updateMSMEProfile(msme.id, backendMSME)
       if ('ok' in result) {
         console.log('MSME profile saved successfully:', result.ok)
-        alert('MSME profile saved successfully!')
+        toast.success('MSME profile saved successfully!')
       } else {
         console.error('Error saving MSME profile:', result.err)
-        alert(`Failed to save MSME profile: ${Object.keys(result.err)[0]}`)
+        toast.error(`Failed to save MSME profile: ${Object.keys(result.err)[0]}`)
       }
     } catch (error) {
       console.error("Error saving MSME data:", error)
-      alert("Failed to save MSME profile. Please try again.")
+      toast.error("Failed to save MSME profile. Please try again.")
     } finally {
       setIsSaving(false)
     }
@@ -142,10 +143,7 @@ export default function EditMSMEProfilePage() {
           <p>Loading MSME data...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <MSMEProfileCard msme={msme} />
-          </div>
+        <div className=" gap-6">
 
           <div className="lg:col-span-2">
             <Card>
