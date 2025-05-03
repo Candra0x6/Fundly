@@ -1,28 +1,32 @@
-import React from 'react'
-import { Card, CardFooter, CardHeader } from '../ui/card'
-import { Skeleton } from '../ui/skeleton'
-import { Star } from 'lucide-react'
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
-
-function PropertyCardSkeleton() {
+export default function NFTCardSkeleton() {
   return (
-    <Card className="w-full h-fit">
-      <CardHeader className="p-0 w-full h-auto aspect-square">
-        <Skeleton className='w-full h-full'/>
-      </CardHeader>
+    <Card className="overflow-hidden border border-zinc-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="relative">
+        <Skeleton className="w-full h-48" />
+        <div className="absolute top-3 left-3 flex gap-1.5">
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+      </div>
+      <CardHeader className="p-4 pb-0 flex-row justify-between items-start">
 
-      <CardFooter className="px-2 pt-2 flex gap-8 justify-start">
-        <div className='w-full'>
-            <Skeleton className='w-full h-5'/>
-            <Skeleton className='w-3/4 h-4 mt-2'/>
+      </CardHeader>
+      <CardContent className="p-4 pt-3 space-y-3">
+        <div className="flex justify-between items-center">
+          <div>
+            <Skeleton className="h-4 w-20 mb-1" />
+            <Skeleton className="h-5 w-24" />
           </div>
-          <div className="flex place-items-center gap-1">
-            <Star fill="black" className="w-4 h-4"/>
-            <Skeleton className='w-10 h-4'/>
-          </div>
+
+        </div>
+
+      </CardContent>
+      <CardFooter className="p-4 pt-0 flex justify-between gap-2">
+        <Skeleton className="h-9 flex-1" />
       </CardFooter>
     </Card>
   )
 }
-
-export default PropertyCardSkeleton
