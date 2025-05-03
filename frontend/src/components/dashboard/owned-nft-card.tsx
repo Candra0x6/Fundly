@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { DollarSign, Calendar, TrendingUp, ArrowRight } from "lucide-react"
+import { SingleAssetPreview } from "../examples/AssetPreviewExample"
 
 interface OwnedNFTCardProps {
   nft: {
@@ -23,7 +24,7 @@ export default function OwnedNFTCard({ nft }: OwnedNFTCardProps) {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="overflow-hidden h-full">
         <div className="aspect-video bg-zinc-100 relative">
-          <img src={nft.image || "/placeholder.svg"} alt={nft.title} className="w-full h-full object-cover" />
+          <SingleAssetPreview assetId={nft.image} />
         </div>
         <CardContent className="p-5">
           <h3 className="font-semibold mb-1">{nft.title}</h3>
