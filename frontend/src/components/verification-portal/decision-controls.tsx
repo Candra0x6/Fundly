@@ -15,30 +15,32 @@ import {
 } from "@/components/ui/alert-dialog"
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useVerificationWorkflowActor } from "@/utility/actors/verificationWorkflow"
 interface DecisionControlsProps {
   msmeId: string
 }
 
 export function DecisionControls({ msmeId }: DecisionControlsProps) {
-  const navigate = useNavigate()
+  const router = useNavigate()
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [showFlagDialog, setShowFlagDialog] = useState(false)
-
-  const handleApprove = () => {
+  const verificationWorkflowCanister = useVerificationWorkflowActor()
+  const handleApprove = async () => {
     // In a real app, you would submit the approval to your API
     console.log("Approving MSME:", msmeId)
     setShowApproveDialog(false)
+    await verificationWorkflowCanister.updateVerificationStatus(msmeId, { Approved: null }, true, "Approved by Verifier")
     // Navigate back to dashboard after a short delay
-    setTimeout(() => navigate("/verification-portal"), 500)
+    setTimeout(() => router("/verification-portal"), 500)
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     // In a real app, you would submit the rejection to your API
     console.log("Rejecting MSME:", msmeId)
     setShowRejectDialog(false)
     // Navigate back to dashboard after a short delay
-    setTimeout(() => navigate("/verification-portal"), 500)
+    setTimeout(() => router("/verification-portal"), 500)
   }
 
   const handleFlag = () => {
@@ -46,7 +48,7 @@ export function DecisionControls({ msmeId }: DecisionControlsProps) {
     console.log("Flagging MSME for review:", msmeId)
     setShowFlagDialog(false)
     // Navigate back to dashboard after a short delay
-    setTimeout(() => navigate("/verification-portal"), 500)
+    setTimeout(() => router("/verification-portal"), 500)
   }
 
   return (
@@ -65,14 +67,6 @@ export function DecisionControls({ msmeId }: DecisionControlsProps) {
               Approve Verification
             </Button>
 
-            <Button
-              variant="outline"
-              className="w-full border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950"
-              onClick={() => setShowFlagDialog(true)}
-            >
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Flag for Review
-            </Button>
 
             <Button
               variant="outline"

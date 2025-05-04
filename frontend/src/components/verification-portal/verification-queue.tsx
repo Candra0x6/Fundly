@@ -1,80 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { MSMEVerificationCard } from "./msme-verification-card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useVerificationWorkflowActor } from "@/utility/actors/verificationWorkflow"
+import { RequestWithMSMEDetails } from "@declarations/verification_workflow/verification_workflow.did"
 
-// Mock data for verification queue
-const mockVerifications = [
-  {
-    id: "msme-001",
-    name: "Green Harvest Farms",
-    type: "Initial Verification",
-    submittedDate: "2023-04-15T10:30:00Z",
-    priority: "High",
-    documentCount: 8,
-    status: "Pending",
-  },
-  {
-    id: "msme-002",
-    name: "Tech Innovate Solutions",
-    type: "Initial Verification",
-    submittedDate: "2023-04-14T09:15:00Z",
-    priority: "Medium",
-    documentCount: 6,
-    status: "Pending",
-  },
-  {
-    id: "msme-003",
-    name: "Artisan Crafts Cooperative",
-    type: "Initial Verification",
-    submittedDate: "2023-04-13T14:45:00Z",
-    priority: "Low",
-    documentCount: 5,
-    status: "Pending",
-  },
-  {
-    id: "msme-004",
-    name: "Local Textiles Manufacturing",
-    type: "Initial Verification",
-    submittedDate: "2023-04-12T11:20:00Z",
-    priority: "Medium",
-    documentCount: 7,
-    status: "Pending",
-  },
-  {
-    id: "msme-005",
-    name: "Sustainable Energy Solutions",
-    type: "Initial Verification",
-    submittedDate: "2023-04-11T16:30:00Z",
-    priority: "High",
-    documentCount: 9,
-    status: "Pending",
-  },
-]
+
 
 export function VerificationQueue() {
+  const [requests, setRequests] = useState<RequestWithMSMEDetails[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 4
-  const totalPages = Math.ceil(mockVerifications.length / itemsPerPage)
+  const totalPages = Math.ceil(requests.length / itemsPerPage)
 
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentItems = mockVerifications.slice(startIndex, endIndex)
+  const currentItems = requests.slice(startIndex, endIndex)
+
+
+  const verificationActor = useVerificationWorkflowActor()
+  useEffect(() => {
+    const fetchRequests = async () => {
+      const requests = await verificationActor.getAllRequestsWithMSMEDetails()
+      setRequests(requests)
+    }
+    fetchRequests()
+  }, [])
 
   return (
     <div>
       <div className="space-y-4">
         {currentItems.map((verification) => (
-          <MSMEVerificationCard key={verification.id} verification={verification} />
+          <MSMEVerificationCard key={verification.request.id} verification={verification} />
         ))}
       </div>
 
       {totalPages > 1 && (
         <div className="flex justify-between items-center mt-6">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing {startIndex + 1}-{Math.min(endIndex, mockVerifications.length)} of {mockVerifications.length}{" "}
+            Showing {startIndex + 1}-{Math.min(endIndex, requests.length)} of {requests.length}{" "}
             verifications
           </div>
           <div className="flex space-x-2">

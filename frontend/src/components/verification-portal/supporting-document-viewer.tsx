@@ -16,13 +16,13 @@ import { formatDate } from "@/utility/converts/formatDate"
 import { useVerificationWorkflowActor } from "@/utility/actors/verificationWorkflow"
 import { toast } from "react-hot-toast"
 interface DocumentReviewerProps {
-  documents: Document[]
-  requestId: string
+  docs: Document
 }
 
 
 
-export function DocumentReviewer({ documents, requestId }: DocumentReviewerProps) {
+export function DocumentReviewer({ docs }: DocumentReviewerProps) {
+  const documents = [docs]
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null)
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
   const [zoomLevel, setZoomLevel] = useState(100)
@@ -30,31 +30,8 @@ export function DocumentReviewer({ documents, requestId }: DocumentReviewerProps
     documents.reduce((acc, doc) => ({ ...acc, [doc.id]: doc.verified }), {}),
   )
 
-  const verificationWorkflowCanister = useVerificationWorkflowActor()
 
   const currentDocument = selectedDocument ? documents.find((doc) => doc.id === selectedDocument) : null
-
-  const handleApproveDocument = async (docId: string) => {
-    setDocumentStatuses((prev) => ({ ...prev, [docId]: "approved" }))
-    const result = await verificationWorkflowCanister.updateVerificationStatus(requestId, { Approved: null }, true, docId)
-    // @ts-ignore
-    if (result.ok === null) {
-      toast.success("Document approved")
-    } else {
-      toast.error("Failed to approve document")
-    }
-  }
-
-  const handleRejectDocument = async (docId: string) => {
-    setDocumentStatuses((prev) => ({ ...prev, [docId]: "rejected" }))
-    const result = await verificationWorkflowCanister.updateVerificationStatus(requestId, { Approved: null }, false, docId)
-    // @ts-ignore
-    if (result.ok === null) {
-      toast.success("Document rejected")
-    } else {
-      toast.error("Failed to reject document")
-    }
-  }
 
   const { previewUrl, downloadFile } = useAssetPreview(currentDocument?.assetId || "")
 
@@ -63,8 +40,8 @@ export function DocumentReviewer({ documents, requestId }: DocumentReviewerProps
       <CardHeader>
         <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Document Review</CardTitle>
       </CardHeader>
-      <CardContent className="">
-        <Tabs defaultValue="documents" className="w-full">
+      <CardContent className="lg:flex justify-between gap-5">
+        <Tabs defaultValue="documents" className="w-[40rem]">
           <TabsList className="mb-4">
             <TabsTrigger value="documents">All Documents ({documents.length})</TabsTrigger>
 
@@ -95,10 +72,7 @@ export function DocumentReviewer({ documents, requestId }: DocumentReviewerProps
                   </div>
 
                   <div className="flex items-center gap-2 self-end sm:self-auto">
-                    {
-                      doc.verified ? <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Approved</Badge> : <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Rejected</Badge>
 
-                    }
                     <Button variant="outline" size="sm" className="ml-2">
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -113,7 +87,7 @@ export function DocumentReviewer({ documents, requestId }: DocumentReviewerProps
 
         {selectedDocument && currentDocument && (
 
-          <div className="mt-8 border-t pt-6 dark:border-gray-700">
+          <div className="mt-8 border-t pt-6 dark:border-gray-700 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{currentDocument.name}</h3>
               <div className="flex gap-2 mt-2 sm:mt-0">
@@ -140,23 +114,7 @@ export function DocumentReviewer({ documents, requestId }: DocumentReviewerProps
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-end gap-3">
-              <Button
-                variant="outline"
-                className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
-                onClick={() => handleRejectDocument(currentDocument.id)}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Reject Document
-              </Button>
-              <Button
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => handleApproveDocument(currentDocument.id)}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Approve Document
-              </Button>
-            </div>
+
           </div>
         )}
       </CardContent>

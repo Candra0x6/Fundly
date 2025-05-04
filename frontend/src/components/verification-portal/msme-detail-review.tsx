@@ -2,56 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-interface MSMEDetailReviewProps {
-  msmeId: string
-}
+import { formatDate } from "@/utility/converts/formatDate"
+import { MSME } from "@declarations/msme_registration/msme_registration.did"
 
 // Mock MSME data
-const msmeDetails = {
-  business: {
-    name: "Green Harvest Farms",
-    type: "Sole Proprietorship",
-    industry: "Agriculture",
-    description:
-      "Green Harvest Farms is a sustainable farming operation specializing in organic vegetables and fruits. We use eco-friendly farming practices to produce high-quality, nutritious food while preserving the environment.",
-    foundingDate: "2018-05-12",
-    employeeCount: 8,
-    registrationNumber: "BRN-12345-GH",
-  },
-  contact: {
-    address: "123 Rural Road, Farmville, AG 54321",
-    phone: "+254 712 345 678",
-    email: "info@greenharvestfarms.com",
-    website: "www.greenharvestfarms.com",
-  },
-  financial: {
-    annualRevenue: "$120,000",
-    fundingStage: "Growth",
-    investmentNeeded: "$50,000",
-    currentInvestors: 0,
-    profitLastYear: "$35,000",
-  },
-  team: [
-    {
-      name: "John Mwangi",
-      role: "Founder & CEO",
-      bio: "Agricultural expert with 15 years of experience in sustainable farming",
-    },
-    {
-      name: "Sarah Ochieng",
-      role: "Operations Manager",
-      bio: "Former agricultural extension officer with expertise in farm management",
-    },
-    {
-      name: "David Kamau",
-      role: "Finance Manager",
-      bio: "Accounting professional with experience in agricultural businesses",
-    },
-  ],
-}
 
-export function MSMEDetailReview({ msmeId }: MSMEDetailReviewProps) {
+
+export function MSMEDetailReview({ msme }: { msme: MSME }) {
+  console.log(msme)
   return (
     <Card>
       <CardHeader>
@@ -71,36 +29,33 @@ export function MSMEDetailReview({ msmeId }: MSMEDetailReviewProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Business Name</h4>
-                  <p className="text-gray-900 dark:text-white">{msmeDetails.business.name}</p>
+                  <p className="text-gray-900 dark:text-white">{msme.details.name}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Business Type</h4>
-                  <p className="text-gray-900 dark:text-white">{msmeDetails.business.type}</p>
+                  <p className="text-gray-900 dark:text-white">{msme.details.focusArea}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Industry</h4>
-                  <p className="text-gray-900 dark:text-white">{msmeDetails.business.industry}</p>
+                  <p className="text-gray-900 dark:text-white">{msme.details.industry.slice(0, 3).map((industry) => industry).join(", ")}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Founding Date</h4>
                   <p className="text-gray-900 dark:text-white">
-                    {new Date(msmeDetails.business.foundingDate).toLocaleDateString()}
+                    {formatDate(msme.registrationDate)}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Employee Count</h4>
-                  <p className="text-gray-900 dark:text-white">{msmeDetails.business.employeeCount}</p>
+                  <p className="text-gray-900 dark:text-white">{Number(msme.financialInfo.employeeCount) / 1000}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Registration Number</h4>
-                  <p className="text-gray-900 dark:text-white">{msmeDetails.business.registrationNumber}</p>
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Business Description</h4>
+                  <p className="text-gray-900 dark:text-white mt-1">{msme.details.description}</p>
                 </div>
+
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Business Description</h4>
-                <p className="text-gray-900 dark:text-white mt-1">{msmeDetails.business.description}</p>
-              </div>
             </div>
           </TabsContent>
 
@@ -108,19 +63,19 @@ export function MSMEDetailReview({ msmeId }: MSMEDetailReviewProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Address</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.contact.address}</p>
+                <p className="text-gray-900 dark:text-white">{msme.contactInfo.country}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.contact.phone}</p>
+                <p className="text-gray-900 dark:text-white">{msme.contactInfo.phone}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.contact.email}</p>
+                <p className="text-gray-900 dark:text-white">{msme.contactInfo.email}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Website</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.contact.website}</p>
+                <p className="text-gray-900 dark:text-white">{msme.contactInfo.website}</p>
               </div>
             </div>
           </TabsContent>
@@ -129,33 +84,26 @@ export function MSMEDetailReview({ msmeId }: MSMEDetailReviewProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Annual Revenue</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.financial.annualRevenue}</p>
+                <p className="text-gray-900 dark:text-white">{Number(msme.financialInfo.annualRevenue) / 1000}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Funding Stage</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.financial.fundingStage}</p>
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Funding Goal</h4>
+                <p className="text-gray-900 dark:text-white">{Number(msme.financialInfo.fundingGoal) / 1000}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Investment Needed</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.financial.investmentNeeded}</p>
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Funding Purpose</h4>
+                <p className="text-gray-900 dark:text-white">{msme.financialInfo.fundingPurpose || "N/A"}</p>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Investors</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.financial.currentInvestors}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Profit Last Year</h4>
-                <p className="text-gray-900 dark:text-white">{msmeDetails.financial.profitLastYear}</p>
-              </div>
+
             </div>
           </TabsContent>
 
           <TabsContent value="team">
             <div className="space-y-6">
-              {msmeDetails.team.map((member, index) => (
+              {msme.teamMembers.map((member, index) => (
                 <div key={index} className="border-b pb-4 last:border-0 dark:border-gray-700">
                   <h4 className="font-medium text-gray-900 dark:text-white">{member.name}</h4>
-                  <p className="text-sm text-emerald-600 dark:text-emerald-400">{member.role}</p>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400">{member.position}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{member.bio}</p>
                 </div>
               ))}
