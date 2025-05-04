@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Quote } from "lucide-react";
 import { useState } from "react";
-
+import Profile from "@/assets/profile-pic.jpeg"
 const testimonials = [
   {
     quote:
@@ -70,9 +70,9 @@ export default function Testimonials() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100/80 backdrop-blur-sm border border-indigo-200/50 mb-4"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/80 backdrop-blur-sm border border-emerald-200/50 mb-4"
           >
-            <span className="text-sm text-indigo-700 font-medium tracking-wide">
+            <span className="text-sm text-emerald-700 font-medium tracking-wide">
               Success Stories
             </span>
           </motion.div>
@@ -85,9 +85,7 @@ export default function Testimonials() {
             className="text-3xl md:text-4xl font-bold mb-4 text-slate-800"
           >
             Hear from Our{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-rose-600">
-              Community
-            </span>
+            Community
           </motion.h2>
 
           <motion.p
@@ -107,8 +105,8 @@ export default function Testimonials() {
               onClick={() => setFilter("all")}
               className={
                 filter === "all"
-                  ? "bg-indigo-600 hover:bg-indigo-700"
-                  : "border-indigo-200 text-slate-700"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "border-emerald-200 text-slate-700"
               }
             >
               All Stories
@@ -118,8 +116,8 @@ export default function Testimonials() {
               onClick={() => setFilter("msme")}
               className={
                 filter === "msme"
-                  ? "bg-indigo-600 hover:bg-indigo-700"
-                  : "border-indigo-200 text-slate-700"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "border-emerald-200 text-slate-700"
               }
             >
               MSMEs
@@ -129,8 +127,8 @@ export default function Testimonials() {
               onClick={() => setFilter("investor")}
               className={
                 filter === "investor"
-                  ? "bg-indigo-600 hover:bg-indigo-700"
-                  : "border-indigo-200 text-slate-700"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "border-emerald-200 text-slate-700"
               }
             >
               Investors
@@ -148,7 +146,7 @@ export default function Testimonials() {
               viewport={{ once: true }}
               className="bg-white backdrop-blur-sm border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
             >
-              <div className="mb-6 text-indigo-500">
+              <div className="mb-6 text-emerald-500">
                 <Quote className="h-8 w-8 opacity-50" />
               </div>
 
@@ -158,16 +156,16 @@ export default function Testimonials() {
 
               <div className="flex items-center gap-4">
                 <img
-                  src={testimonial.avatar || "/placeholder.svg"}
+                  src={Profile}
                   alt={testimonial.author}
-                  className="rounded-full border-2 border-indigo-100"
+                  className="rounded-full border-2 aspect-square w-14 border-emerald-100"
                 />
                 <div>
                   <h4 className="text-slate-800 font-medium">
                     {testimonial.author}
                   </h4>
                   <p className="text-slate-500 text-sm">{testimonial.role}</p>
-                  <p className="text-indigo-600 text-xs font-medium mt-1">
+                  <p className="text-emerald-600 text-xs font-medium mt-1">
                     {testimonial.business}
                   </p>
                 </div>
@@ -176,20 +174,7 @@ export default function Testimonials() {
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center"
-        >
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800"
-          >
-            Join Our Community <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </motion.div>
+
       </div>
     </section>
   );
