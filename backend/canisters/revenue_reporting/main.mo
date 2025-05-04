@@ -10,12 +10,11 @@ import Text "mo:base/Text";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
-import Debug "mo:base/Debug";
-import Error "mo:base/Error";
 import MSMECanister "canister:msme_registration";
 import NFTCanister "canister:nft_canister";
 import TokenCanister "canister:token_canister";
 import Types "../../types";
+import AuthenticationCanister "canister:authentication";
 actor RevenueReporting {
     // Types
     public type Revenue = {
@@ -175,7 +174,8 @@ actor RevenueReporting {
     };
 
     // Distribute revenue to token holders based on ICRC-7 token ownership
-    public shared (_msg) func distributeRevenue(revenueId : Text) : async Result.Result<Revenue, RevenueError> {
+    public shared (msg) func distributeRevenue(revenueId : Text) : async Result.Result<Revenue, RevenueError> {
+
         switch (revenues.get(revenueId)) {
             case (null) { return #err(#NotFound) };
             case (?revenue) {
@@ -183,10 +183,75 @@ actor RevenueReporting {
                     return #ok(revenue); // Already distributed
                 };
 
+                // Update MSME annual revenue
+                let msmeOpt = await MSMECanister.getMSME(revenue.msmeId);
+                let msmeOwnerPrincipal = switch (msmeOpt) {
+                    case (#ok(msme)) {
+                        // Update the MSME record with new revenue amount
+                        try {
+                            let updateResult = await MSMECanister.updateMSMEProfile(
+                                revenue.msmeId,
+                                {
+                                    details = msme.details;
+                                    contactInfo = msme.contactInfo;
+                                    financialInfo = {
+                                        annualRevenue = msme.financialInfo.annualRevenue + revenue.amount;
+                                        employeeCount = msme.financialInfo.employeeCount;
+                                        fundingGoal = msme.financialInfo.fundingGoal;
+                                        fundingPurpose = msme.financialInfo.fundingPurpose;
+                                    };
+                                    overview = msme.overview;
+                                    teamMembers = msme.teamMembers;
+                                    documents = msme.documents;
+                                    gallery = msme.gallery;
+                                    roadmap = msme.roadmap;
+                                },
+                            );
+
+                            // Continue even if update fails, but log the error
+                            switch (updateResult) {
+                                case (#err(e)) {
+                                    // Log the error but continue with distribution
+                                    // In a production system, consider adding proper logging here
+                                };
+                                case (#ok(_)) {};
+                            };
+                        } catch (_) {
+                            // Continue even if update fails
+                        };
+
+                        msme.details.owner;
+                    };
+                    case (#err(_)) { return #err(#MSMENotFound) };
+                };
+
+                // Mint tokens to MSME owner
+                let mintResult = try {
+                    await TokenCanister.mint(
+                        {
+                            owner = msmeOwnerPrincipal;
+                            subaccount = null;
+                        },
+                        revenue.amount,
+                    );
+                } catch (e) {
+                    return #err(#DistributionFailed);
+                };
+
+                // Check the mint result
+                switch (mintResult) {
+                    case (#err(_)) {
+                        return #err(#DistributionFailed);
+                    };
+                    case (#ok(_)) {
+                        // Mint successful, continue with distribution
+                    };
+                };
+
                 // Get all tokens for this MSME
                 let tokensResult = try {
                     await NFTCanister.getNFTsByMSME(revenue.msmeId);
-                } catch (e) {
+                } catch (_e) {
                     return #err(#ValidationError);
                 };
 
@@ -230,35 +295,26 @@ actor RevenueReporting {
 
                 for ((tokenId, share) in tokenShares.vals()) {
                     // Calculate amount to distribute to this token
-                    Debug.print("revenue Amount: " # Nat.toText(revenue.amount) # " share: " # Nat.toText(share) # " totalShare: " # Nat.toText(totalShares));
                     let amount = (revenue.amount * share) / 10000;
-                    Debug.print("Amount to distribute: " # Nat.toText(amount));
-                    let msmeOpt = await MSMECanister.getMSME(revenue.msmeId);
-                    let msmeOwner = switch (msmeOpt) {
-                        case (#ok(msme)) { msme.details.owner };
-                        case (#err(_)) { return #err(#MSMENotFound) };
-                    };
+
                     if (amount > 0) {
                         // Get token owner
                         let ownerOpt = try {
                             await NFTCanister.icrc7_owner_of(tokenId);
-                        } catch (e) {
+                        } catch (_e) {
                             return #err(#ValidationError);
                         };
 
                         switch (ownerOpt) {
                             case (null) {};
                             case (?owner) {
-                                Debug.print("Owner: " # Principal.toText(owner.owner));
-                                Debug.print("MSME Owner: " # Principal.toText(msmeOwner));
-                                Debug.print("Amount: " # Nat.toText(amount));
-                                // Transfer tokens to the owner
+                                // Transfer tokens from MSME owner to token owner
                                 try {
                                     let transferArgs : TokenTransferArgs = {
                                         from_subaccount = null;
                                         to = owner;
                                         from = {
-                                            owner = msmeOwner;
+                                            owner = msmeOwnerPrincipal;
                                             subaccount = null;
                                         };
                                         amount = amount;
@@ -268,7 +324,6 @@ actor RevenueReporting {
                                     };
 
                                     let transferResult = await TokenCanister.icrc_spesific_transfer(transferArgs);
-                                    Debug.print("Transferring... " # debug_show (transferResult));
 
                                     switch (transferResult) {
                                         case (#ok(txId)) {
@@ -286,7 +341,6 @@ actor RevenueReporting {
                                                             txId = ?txId;
                                                             category = "distributionTx";
                                                         });
-                                                        Debug.print("Transfer Success");
                                                     };
                                                     case (#err(e)) {
                                                         // We still proceed even if recording fails
@@ -298,7 +352,6 @@ actor RevenueReporting {
                                                             txId = ?txId;
                                                             category = "distributionTx";
                                                         });
-                                                        Debug.print("Transfer Def Recorded: " # Nat.toText(txId));
                                                     };
                                                 };
                                             } catch (e) {
@@ -311,8 +364,6 @@ actor RevenueReporting {
                                                     txId = ?txId;
                                                     category = "distributionTx";
                                                 });
-
-                                                Debug.print("Transfer Failed: " # Error.message(e));
                                             };
                                         };
                                         case (#err(e)) {
@@ -325,10 +376,9 @@ actor RevenueReporting {
                                                 txId = null;
                                                 category = "distributionTx";
                                             });
-                                            Debug.print("Transfer Failed Recorded: " # debug_show (e));
                                         };
                                     };
-                                } catch (e) {
+                                } catch (_e) {
                                     // Record the failed transfer
                                     distributionTxs.add({
                                         tokenId = tokenId;
@@ -338,7 +388,6 @@ actor RevenueReporting {
                                         txId = null;
                                         category = "distributionTx";
                                     });
-                                    Debug.print("Transfer Faile sad: " # Error.message(e));
                                 };
                             };
                         };
