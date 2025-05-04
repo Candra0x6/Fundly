@@ -11,8 +11,11 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Types "../../types/lib";
 import Int "mo:base/Int";
+import Bool "mo:base/Bool";
+import AuthenticationCanister "canister:authentication";
+import MSMERegistrationCanister "canister:msme_registration";
 actor VerificationWorkflow {
-    // Types
+    // Typesz
     type MSMEID = Types.MSMEID;
 
     type VerificationOfficer = {
@@ -37,9 +40,7 @@ actor VerificationWorkflow {
         createdAt : Time.Time;
         updatedAt : Time.Time;
         assignedTo : ?Principal;
-        comments : [VerificationComment];
-        documents : [Document];
-        requiredDocuments : [Text];
+        documents : [Types.Document];
     };
 
     type VerificationComment = {
@@ -50,17 +51,6 @@ actor VerificationWorkflow {
         isInternal : Bool; // True if visible only to verification officers
     };
 
-    type Document = {
-        id : Text;
-        name : Text;
-        documentType : Types.DocumentType;
-        assetId : Text;
-        uploadedAt : Time.Time;
-        uploadedBy : Principal;
-        status : Types.DocumentStatus;
-        reviewComments : ?Text;
-    };
-
     type Error = {
         #NotFound;
         #Unauthorized;
@@ -69,6 +59,10 @@ actor VerificationWorkflow {
         #SystemError;
     };
 
+    public type RequestWithMSMEDetails = {
+        request : VerificationRequest;
+        msmeDetails : ?Types.MSME;
+    };
     // State variables
     private stable var nextRequestId : Nat = 1;
     private stable var verificationOfficersEntries : [(Principal, VerificationOfficer)] = [];
@@ -88,27 +82,11 @@ actor VerificationWorkflow {
         Text.hash,
     );
 
-    // For connecting to the MSME Registration canister
-    private var msmeRegistrationCanister : ?Principal = null;
-
-    // System management functions
-    public shared ({ caller }) func setMSMERegistrationCanister(canisterId : Principal) : async Result.Result<(), Error> {
-        if (not _isAdmin(caller)) {
-            return #err(#Unauthorized);
-        };
-        msmeRegistrationCanister := ?canisterId;
-        #ok();
-    };
-
     public shared ({ caller }) func addVerificationOfficer(
         officerId : Principal,
         name : Text,
         department : Text,
     ) : async Result.Result<(), Error> {
-        if (not _isAdmin(caller)) {
-            return #err(#Unauthorized);
-        };
-
         // Ensure the officer doesn't already exist
         switch (verificationOfficers.get(officerId)) {
             case (null) {
@@ -128,7 +106,7 @@ actor VerificationWorkflow {
     };
 
     public shared ({ caller }) func removeVerificationOfficer(officerId : Principal) : async Result.Result<(), Error> {
-        if (not _isAdmin(caller)) {
+        if (not _isVerificationOfficer(caller)) {
             return #err(#Unauthorized);
         };
 
@@ -147,9 +125,8 @@ actor VerificationWorkflow {
     // MSME verification request functions
     public shared ({ caller }) func createVerificationRequest(
         msmeId : MSMEID,
-        requiredDocuments : [Text],
+        documents : [Types.Document],
     ) : async Result.Result<Text, Error> {
-        // In a production app, we would verify caller is from MSME canister
 
         let requestId = _generateRequestId();
         let request : VerificationRequest = {
@@ -159,9 +136,7 @@ actor VerificationWorkflow {
             createdAt = Time.now();
             updatedAt = Time.now();
             assignedTo = null;
-            comments = [];
-            documents = [];
-            requiredDocuments = requiredDocuments;
+            documents = documents;
         };
 
         verificationRequests.put(requestId, request);
@@ -172,7 +147,7 @@ actor VerificationWorkflow {
         requestId : Text,
         officerId : Principal,
     ) : async Result.Result<(), Error> {
-        if (not _isVerificationOfficerOrAdmin(caller)) {
+        if (not _isVerificationOfficer(caller)) {
             return #err(#Unauthorized);
         };
 
@@ -197,100 +172,7 @@ actor VerificationWorkflow {
                     createdAt = request.createdAt;
                     updatedAt = Time.now();
                     assignedTo = ?officerId;
-                    comments = request.comments;
                     documents = request.documents;
-                    requiredDocuments = request.requiredDocuments;
-                };
-                verificationRequests.put(requestId, updatedRequest);
-                #ok();
-            };
-        };
-    };
-
-    public shared ({ caller }) func addComment(
-        requestId : Text,
-        text : Text,
-        isInternal : Bool,
-    ) : async Result.Result<(), Error> {
-        if (not _isVerificationOfficerOrAdmin(caller) and isInternal) {
-            return #err(#Unauthorized);
-        };
-
-        // Update the request
-        switch (verificationRequests.get(requestId)) {
-            case (null) {
-                #err(#NotFound);
-            };
-            case (?request) {
-                let comment : VerificationComment = {
-                    id = _generateCommentId();
-                    author = caller;
-                    text = text;
-                    timestamp = Time.now();
-                    isInternal = isInternal;
-                };
-
-                let commentsBuffer = Buffer.fromArray<VerificationComment>(request.comments);
-                commentsBuffer.add(comment);
-
-                let updatedRequest = {
-                    id = request.id;
-                    msmeId = request.msmeId;
-                    status = request.status;
-                    createdAt = request.createdAt;
-                    updatedAt = Time.now();
-                    assignedTo = request.assignedTo;
-                    comments = Buffer.toArray(commentsBuffer);
-                    documents = request.documents;
-                    requiredDocuments = request.requiredDocuments;
-                };
-                verificationRequests.put(requestId, updatedRequest);
-                #ok();
-            };
-        };
-    };
-
-    public shared ({ caller }) func uploadDocument(
-        requestId : Text,
-        name : Text,
-        docType : Types.DocumentType,
-        assetId : Text,
-        role : Types.UserRole,
-    ) : async Result.Result<(), Error> {
-
-        if (role != #MSME) {
-            return #err(#Unauthorized);
-        };
-
-        switch (verificationRequests.get(requestId)) {
-            case (null) {
-                #err(#NotFound);
-            };
-            case (?request) {
-                let document : Document = {
-                    id = _generateDocumentId();
-                    name = name;
-                    documentType = docType;
-                    assetId = assetId;
-                    uploadedAt = Time.now();
-                    uploadedBy = caller;
-                    status = #Pending;
-                    reviewComments = null;
-                };
-
-                let documentsBuffer = Buffer.fromArray<Document>(request.documents);
-                documentsBuffer.add(document);
-
-                let updatedRequest = {
-                    id = request.id;
-                    msmeId = request.msmeId;
-                    status = request.status;
-                    createdAt = request.createdAt;
-                    updatedAt = Time.now();
-                    assignedTo = request.assignedTo;
-                    comments = request.comments;
-                    documents = Buffer.toArray(documentsBuffer);
-                    requiredDocuments = request.requiredDocuments;
                 };
                 verificationRequests.put(requestId, updatedRequest);
                 #ok();
@@ -302,9 +184,8 @@ actor VerificationWorkflow {
         requestId : Text,
         documentId : Text,
         status : Types.DocumentStatus,
-        comments : ?Text,
     ) : async Result.Result<(), Error> {
-        if (not _isVerificationOfficerOrAdmin(caller)) {
+        if (not _isVerificationOfficer(caller)) {
             return #err(#Unauthorized);
         };
 
@@ -313,23 +194,22 @@ actor VerificationWorkflow {
                 #err(#NotFound);
             };
             case (?request) {
-                let documentsBuffer = Buffer.fromArray<Document>(request.documents);
+                let documentsBuffer = Buffer.fromArray<Types.Document>(request.documents);
                 var documentFound = false;
 
-                let updatedDocuments = Array.map<Document, Document>(
+                let updatedDocuments = Array.map<Types.Document, Types.Document>(
                     request.documents,
-                    func(doc : Document) : Document {
+                    func(doc : Types.Document) : Types.Document {
                         if (doc.id == documentId) {
                             documentFound := true;
                             return {
                                 id = doc.id;
                                 name = doc.name;
-                                documentType = doc.documentType;
+                                docType = doc.docType;
                                 assetId = doc.assetId;
-                                uploadedAt = doc.uploadedAt;
-                                uploadedBy = doc.uploadedBy;
-                                status = status;
-                                reviewComments = comments;
+                                uploadDate = doc.uploadDate;
+                                verified = doc.verified;
+                                assetCanisterId = doc.assetCanisterId;
                             };
                         } else {
                             return doc;
@@ -348,9 +228,7 @@ actor VerificationWorkflow {
                     createdAt = request.createdAt;
                     updatedAt = Time.now();
                     assignedTo = request.assignedTo;
-                    comments = request.comments;
                     documents = updatedDocuments;
-                    requiredDocuments = request.requiredDocuments;
                 };
                 verificationRequests.put(requestId, updatedRequest);
                 #ok();
@@ -361,33 +239,47 @@ actor VerificationWorkflow {
     public shared ({ caller }) func updateVerificationStatus(
         requestId : Text,
         status : VerificationStatus,
+        docStatus : Bool,
+        documentId : Text,
     ) : async Result.Result<(), Error> {
-        if (not _isVerificationOfficerOrAdmin(caller)) {
+        // Check authorization first
+        if (not _isVerificationOfficer(caller)) {
             return #err(#Unauthorized);
         };
 
+        // Validate request exists
         switch (verificationRequests.get(requestId)) {
             case (null) {
-                #err(#NotFound);
+                return #err(#NotFound);
             };
             case (?request) {
-                let updatedRequest = {
-                    id = request.id;
-                    msmeId = request.msmeId;
-                    status = status;
-                    createdAt = request.createdAt;
-                    updatedAt = Time.now();
-                    assignedTo = request.assignedTo;
-                    comments = request.comments;
-                    documents = request.documents;
-                    requiredDocuments = request.requiredDocuments;
-                };
-                verificationRequests.put(requestId, updatedRequest);
+                // First do the cross-canister call
+                // This ensures we don't update our state if the remote call fails
+                let result = await MSMERegistrationCanister.updatedDocumentVerified(
+                    request.msmeId,
+                    documentId,
+                    docStatus,
+                );
+                Debug.print("Result: " # debug_show (result));
 
-                // Notify MSME canister about the status change
-                // This would call the MSME canister to update status there
-                // await _notifyMsmeCanister(request.msmeId, status);
-                #ok();
+                switch (result) {
+                    case (#err(_e)) {
+                        return #err(#SystemError);
+                    };
+                    case (#ok()) {
+                        let updatedRequest = {
+                            id = request.id;
+                            msmeId = request.msmeId;
+                            status = status;
+                            createdAt = request.createdAt;
+                            updatedAt = Time.now();
+                            assignedTo = request.assignedTo;
+                            documents = request.documents;
+                        };
+                        verificationRequests.put(requestId, updatedRequest);
+                        return #ok();
+                    };
+                };
             };
         };
     };
@@ -403,7 +295,7 @@ actor VerificationWorkflow {
     };
 
     public query ({ caller }) func getVerificationOfficers() : async [VerificationOfficer] {
-        if (not _isVerificationOfficerOrAdmin(caller)) {
+        if (not _isVerificationOfficer(caller)) {
             return [];
         };
 
@@ -453,6 +345,28 @@ actor VerificationWorkflow {
         Buffer.toArray(buffer);
     };
 
+    public shared func getAllRequestsWithMSMEDetails() : async [RequestWithMSMEDetails] {
+        let buffer = Buffer.Buffer<RequestWithMSMEDetails>(10);
+
+        for ((_, request) in verificationRequests.entries()) {
+            // Get MSME details for each request
+            let msmeResult = await MSMERegistrationCanister.getMSME(request.msmeId);
+
+            let msmeDetails = switch (msmeResult) {
+                case (#ok(msme)) { ?msme };
+                case (#err(_)) { null };
+            };
+
+            let requestWithDetails : RequestWithMSMEDetails = {
+                request = request;
+                msmeDetails = msmeDetails;
+            };
+
+            buffer.add(requestWithDetails);
+        };
+
+        Buffer.toArray(buffer);
+    };
     // Helper functions
     private func _generateRequestId() : Text {
         let id = "VR" # Nat.toText(nextRequestId);
@@ -468,18 +382,8 @@ actor VerificationWorkflow {
         "DOC" # Nat.toText(Int.abs(Time.now()));
     };
 
-    private func _isAdmin(caller : Principal) : Bool {
-        // In a real implementation, this would check against a list of admin principals
-        // For now, just return true for simplicity in development
-        true;
-    };
-
     private func _isVerificationOfficer(caller : Principal) : Bool {
         Option.isSome(verificationOfficers.get(caller));
-    };
-
-    private func _isVerificationOfficerOrAdmin(caller : Principal) : Bool {
-        _isVerificationOfficer(caller) or _isAdmin(caller);
     };
 
     // System functions for stable memory
