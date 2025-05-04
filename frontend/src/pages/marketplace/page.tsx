@@ -60,24 +60,30 @@ export default function MarketplacePage() {
   ]
 
   const nftActor = useNftActor()
-  const tokenActor = useTokenActor()
 
-  // Apply filters and search
+  // Fetch NFTs only once when component mounts
   useEffect(() => {
     const fetchNfts = async () => {
-      setLoading(true)
       try {
-        const result = await nftActor.getAllMSMENFTsWithMSMEData()
-        const a = await nftActor.getAllListingsWithDetails()
-        console.log(a)
+        setLoading(true)
+        const result = await nftActor.getAllListingsWithDetails()
+        console.log(result)
         // @ts-ignore
         setNfts(result)
+        // Initial filter application
+        setFilteredNfts(result)
+        setLoading(false)
       } catch (error) {
         console.error("Error fetching NFTs:", error)
+        setLoading(false)
       }
     }
-    fetchNfts()
 
+    fetchNfts()
+  }, []) // Only depend on nftActor, not on nfts
+
+  // Apply filters and search in a separate effect
+  useEffect(() => {
     let results = [...nfts]
 
     // Apply search filter
@@ -150,10 +156,7 @@ export default function MarketplacePage() {
     }
 
     setFilteredNfts(results)
-    if (results.length > 0) {
-      setLoading(false)
-    }
-  }, [searchQuery, activeFilters, nfts])
+  }, [searchQuery, activeFilters, nfts]) // This effect depends on nfts but doesn't update it
 
   // Add a filter
   const addFilter = (category: string, value: string) => {
@@ -504,18 +507,18 @@ export default function MarketplacePage() {
                 Array(6)
                   .fill(0)
                   .map((_, index) => <NFTCardSkeleton key={`skeleton-${index}`} />)
-              ) : filteredNfts.length > 0 ? (
+              ) : filteredNfts && filteredNfts.length > 0 ? (
                 // Show actual NFT cards when loaded
                 filteredNfts.map((item, index) => <NFTCard key={index} detailsData={item} />)
-              ) : (
-                // Show no results message
+              ) : !loading ? (
+                // Show no results message only when not loading and no results found
                 <div className="col-span-3 py-12 text-center">
                   <p className="text-zinc-500">No NFTs found matching your criteria.</p>
                   <Button variant="outline" className="mt-4" onClick={clearAllFilters}>
                     Clear filters
                   </Button>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Pagination */}
