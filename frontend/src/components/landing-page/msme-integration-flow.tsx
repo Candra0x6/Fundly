@@ -2,21 +2,28 @@
 
 import { useRef } from "react";
 import {
-  ArrowRightIcon,
   BarChart3,
+  Bitcoin,
   BuildingIcon,
   CircleIcon,
-  CoffeeIcon,
+
   CoinsIcon,
-  DatabaseIcon,
   GlobeIcon,
+  Ham,
   HandCoinsIcon,
   HeartIcon,
   LandmarkIcon,
+  Salad,
   Shield,
-  ShoppingBagIcon,
-  StoreIcon,
+
+  Shirt,
+
+  Store,
+
+  TvMinimal,
+
   Users,
+  UserSearch,
   UsersIcon,
   WalletIcon,
   Zap,
@@ -50,14 +57,16 @@ export default function MSMEIntegrationFlow() {
       className="relative flex h-screen w-full items-center justify-center overflow-hidden  "
       ref={containerRef}
     >
+      <div className="absolute z-0 bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:54px_54px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+
       {/* Connect Node */}
       <div
         ref={connectNodeRef}
-        className="absolute left-[25%] top-1/2 -translate-y-1/2 flex items-center justify-center z-10 mt-5"
+        className="absolute left-[25%] top-1/2 -translate-y-1/2 flex items-center justify-center z-10 mt-11"
       >
         <div className="flex flex-col items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white">
-            <CircleIcon className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
+            <Store className="h-5 w-5" />
           </div>
           <span className="mt-2 font-medium">MSME</span>
         </div>
@@ -66,18 +75,18 @@ export default function MSMEIntegrationFlow() {
       {/* Sync Node */}
       <div
         ref={syncNodeRef}
-        className="absolute right-[25%] top-1/2 -translate-y-1/2 flex items-center justify-center z-10 mt-5"
+        className="absolute right-[25%] top-1/2 -translate-y-1/2 flex items-center justify-center z-10 mt-8"
       >
         <div className="flex flex-col items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white">
-            <CircleIcon className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
+            <UserSearch className="h-5 w-5" />
           </div>
           <span className="mt-2 font-medium">Investor</span>
         </div>
       </div>
 
       {/* Central UI Component */}
-      <section ref={databaseRef} className="z-10">
+      <section ref={databaseRef} className="z-20 backdrop-blur-sm bg-white/10 lg:bg-transparent lg:backdrop-blur-none">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
@@ -89,8 +98,8 @@ export default function MSMEIntegrationFlow() {
               looking for new opportunities.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" className="h-12 px-6 rounded-xl">
-                Register as Investor
+              <Button variant="default" className="h-12 px-6 rounded-xl font-bold">
+                Start Investing
               </Button>
             </div>
 
@@ -98,7 +107,7 @@ export default function MSMEIntegrationFlow() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
               <StatCard
                 value="$12.5M+"
-                label="Total Investments"
+                label="Invested"
                 icon={<BarChart3 className="h-5 w-5 text-emerald-500" />}
               />
               <StatCard value="450+" label="Verified MSMEs" icon={<Shield className="h-5 w-5 text-emerald-500" />} />
@@ -115,28 +124,28 @@ export default function MSMEIntegrationFlow() {
         ref={service1Ref}
         className="absolute left-[5%] top-[20%] flex h-10 w-10 items-center justify-center rounded-full border bg-white shadow-md "
       >
-        <WalletIcon className="h-5 w-5 text-blue-500" />
+        <Ham className="h-5 w-5 text-blue-500" />
       </div>
 
       <div
         ref={service2Ref}
         className="absolute left-[10%] top-[40%] flex h-10 w-10 items-center justify-center rounded-full border bg-white shadow-md z-10"
       >
-        <HeartIcon className="h-5 w-5 text-indigo-500" />
+        <Salad className="h-5 w-5 text-indigo-500" />
       </div>
 
       <div
         ref={service3Ref}
         className="absolute left-[5%] top-[60%] flex h-10 w-10 items-center justify-center rounded-full border bg-white shadow-md z-10"
       >
-        <GlobeIcon className="h-5 w-5 text-emerald-500" />
+        <TvMinimal className="h-5 w-5 text-emerald-500" />
       </div>
 
       <div
         ref={service4Ref}
         className="absolute left-[10%] top-[80%] flex h-10 w-10 items-center justify-center rounded-full border bg-white shadow-md z-10"
       >
-        <UsersIcon className="h-5 w-5 text-amber-500" />
+        <Shirt className="h-5 w-5 text-amber-500" />
       </div>
 
       {/* Right side service nodes */}
