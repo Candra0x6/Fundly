@@ -37,7 +37,9 @@ export default function MSMEProfilePage() {
         setLoading(false)
       }
     }
-    fetchMsme()
+    setTimeout(() => {
+      fetchMsme()
+    }, 1000)
   }, [])
 
   if (loading) {
@@ -121,7 +123,7 @@ export default function MSMEProfilePage() {
                 </div>
                 <div className="bg-zinc-50 p-3 rounded-lg text-center">
                   <p className="text-xs text-zinc-500 mb-1">Employees</p>
-                  <p className="font-bold">{Number(msme.financialInfo.employeeCount)}</p>
+                  <p className="font-bold">{Number(msme.financialInfo.employeeCount) / 1000}</p>
                 </div>
                 <div className="bg-zinc-50 p-3 rounded-lg text-center">
                   <p className="text-xs text-zinc-500 mb-1">Funding Goal</p>
