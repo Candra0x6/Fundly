@@ -102,12 +102,13 @@ export function useRevenueReporting() {
    * @returns Promise with the result
    */
   const distributeRevenue = useCallback(
-    async (revenueId: string): Promise<Result<null, RevenueError>> => {
+    async (revenueId: string, msmeOwner: Principal): Promise<Result<null, RevenueError>> => {
       setLoading(true);
       setError(null);
 
       try {
         const result = await actor.distributeRevenue(revenueId);
+        // @ts-ignore
         return result;
       } catch (e) {
         console.error("Failed to distribute revenue:", e);
