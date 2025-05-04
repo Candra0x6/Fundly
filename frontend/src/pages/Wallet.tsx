@@ -60,7 +60,7 @@
 // export default HomePage;
 
 
-"use client"
+
 
 import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
@@ -76,7 +76,7 @@ import { useAuth } from '../utility/use-auth-client';
 import { toast } from "react-toastify"
 
 export default function WhoAmIPage() {
-  
+
   const { whoamiActor, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -84,7 +84,7 @@ export default function WhoAmIPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean>();
 
-  const checkConnection = async() => {
+  const checkConnection = async () => {
     try {
       setIsLoading(true);
 
@@ -151,7 +151,7 @@ export default function WhoAmIPage() {
           <Button
             variant="ghost"
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            
+
             id="logout"
             onClick={logout}
           >
@@ -173,7 +173,7 @@ export default function WhoAmIPage() {
               <User className="w-5 h-5 text-blue-600" />
               <span className="text-lg font-medium text-blue-600">Who am I?</span>
             </div>
-            
+
             <Button
               type="button"
               id="whoamiButton"
@@ -182,8 +182,8 @@ export default function WhoAmIPage() {
               Who am I?
             </Button>
 
-              <div className="relative">
-                <Input type="text"
+            <div className="relative">
+              <Input type="text"
                 readOnly
                 id="whoami"
                 value={result}
@@ -203,7 +203,7 @@ export default function WhoAmIPage() {
 
             {/* Button for Connect Wallet-nya */}
 
-            <ConnectWallet/>
+            <ConnectWallet />
 
             {/* <Button
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg relative overflow-hidden group"
@@ -242,7 +242,7 @@ export default function WhoAmIPage() {
         {/* Decorative Elements */}
         <div className="absolute top-1/4 left-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl" />
-        
+
       </div>
 
       {/* Connection Status Indicator */}

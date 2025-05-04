@@ -1,4 +1,4 @@
-"use client"
+
 
 import { motion } from "framer-motion"
 import { Shield, Zap, BarChart3, Globe } from "lucide-react"

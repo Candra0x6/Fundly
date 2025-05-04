@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { motion } from "framer-motion";
 import { DollarSign, ShieldCheck, Clock, Gift, Store, Earth } from "lucide-react";

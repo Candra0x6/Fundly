@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useEffect, useState } from "react"
 import { MSMEVerificationCard } from "./msme-verification-card"

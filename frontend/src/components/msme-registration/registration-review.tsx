@@ -1,4 +1,4 @@
-"use client"
+
 import { FileText, User, Building, Phone, DollarSign, FileCheck } from "lucide-react"
 import { TeamMember } from "./team-members-form"
 import { Document } from "./document-upload-form"

@@ -1,10 +1,10 @@
-"use client"
+
 
 import { useAuth } from '../utility/use-auth-client';
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Sparkles , Unlink } from "lucide-react"
+import { Sparkles, Unlink } from "lucide-react"
 import { SparklesCore } from "@/components/landing/sparkles"
 
 export default function ConnectPage() {

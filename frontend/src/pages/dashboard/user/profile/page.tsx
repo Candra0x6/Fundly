@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useEffect, useState } from "react"
 import { User, Mail, MapPin, Briefcase, Globe, Twitter, Linkedin, Github, Edit, Wallet } from "lucide-react"

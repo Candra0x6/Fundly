@@ -1,4 +1,4 @@
-"use client"
+
 
 import { motion } from "framer-motion"
 import { CheckCircle2, Clock, AlertTriangle, X } from "lucide-react"
@@ -24,23 +24,21 @@ export default function VerificationStatusBanner({ status }: VerificationStatusP
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`mb-6 p-4 rounded-lg ${
-        status.status === "verified"
+      className={`mb-6 p-4 rounded-lg ${status.status === "verified"
           ? "bg-emerald-50 border border-emerald-100"
           : status.status === "pending"
             ? "bg-yellow-50 border border-yellow-100"
             : "bg-red-50 border border-red-100"
-      }`}
+        }`}
     >
       <div className="flex items-start gap-3">
         <div
-          className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-            status.status === "verified"
+          className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${status.status === "verified"
               ? "bg-emerald-100 text-emerald-600"
               : status.status === "pending"
                 ? "bg-yellow-100 text-yellow-600"
                 : "bg-red-100 text-red-600"
-          }`}
+            }`}
         >
           {status.status === "verified" ? (
             <CheckCircle2 className="h-5 w-5" />
@@ -53,13 +51,12 @@ export default function VerificationStatusBanner({ status }: VerificationStatusP
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <h3
-              className={`font-medium ${
-                status.status === "verified"
+              className={`font-medium ${status.status === "verified"
                   ? "text-emerald-700"
                   : status.status === "pending"
                     ? "text-yellow-700"
                     : "text-red-700"
-              }`}
+                }`}
             >
               {status.status === "verified"
                 ? "Verified Business"
@@ -72,24 +69,22 @@ export default function VerificationStatusBanner({ status }: VerificationStatusP
             </Button>
           </div>
           <p
-            className={`mt-1 ${
-              status.status === "verified"
+            className={`mt-1 ${status.status === "verified"
                 ? "text-emerald-600"
                 : status.status === "pending"
                   ? "text-yellow-600"
                   : "text-red-600"
-            }`}
+              }`}
           >
             {status.message}
           </p>
           <div
-            className={`flex items-center text-xs mt-2 ${
-              status.status === "verified"
+            className={`flex items-center text-xs mt-2 ${status.status === "verified"
                 ? "text-emerald-500"
                 : status.status === "pending"
                   ? "text-yellow-500"
                   : "text-red-500"
-            }`}
+              }`}
           >
             <span>Last updated: {status.lastUpdated}</span>
             {status.nextReview && (

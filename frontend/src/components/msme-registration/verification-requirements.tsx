@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState } from "react"
 import { CheckCircle, AlertCircle, X, FileText, ListChecks } from "lucide-react"

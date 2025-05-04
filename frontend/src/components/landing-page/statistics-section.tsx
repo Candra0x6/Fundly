@@ -1,4 +1,4 @@
-"use client"
+
 
 import { motion } from "framer-motion"
 import { ArrowUpRight, TrendingUp, Users, Building, Coins } from "lucide-react"

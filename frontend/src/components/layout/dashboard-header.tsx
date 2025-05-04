@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useEffect, useState } from "react"
 import { Bell, Search, ChevronDown, Plus, Settings, HelpCircle, LogOut, User, CreditCard, ExternalLink, History, Wallet } from "lucide-react"

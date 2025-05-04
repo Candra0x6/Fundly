@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from "lucide-react"

@@ -1,4 +1,4 @@
-"use client"
+
 
 import type React from "react"
 
@@ -106,13 +106,12 @@ export default function TokenAmountInput({
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           placeholder="0.00"
-          className={`pl-10 ${
-            inputStatus === "valid" && !isFocused
+          className={`pl-10 ${inputStatus === "valid" && !isFocused
               ? "border-emerald-500 focus-visible:ring-emerald-500"
               : inputStatus === "error" && !isFocused
                 ? "border-red-500 focus-visible:ring-red-500"
                 : ""
-          }`}
+            }`}
         />
 
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-400">FND</div>

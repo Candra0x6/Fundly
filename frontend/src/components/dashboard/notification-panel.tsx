@@ -1,4 +1,4 @@
-"use client"
+
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -75,14 +75,12 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className={`p-3 rounded-lg border ${
-                notification.read ? "border-zinc-100" : "border-emerald-100 bg-emerald-50"
-              }`}
+              className={`p-3 rounded-lg border ${notification.read ? "border-zinc-100" : "border-emerald-100 bg-emerald-50"
+                }`}
             >
               <div className="flex items-start gap-3">
                 <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    notification.type === "earning"
+                  className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${notification.type === "earning"
                       ? "bg-emerald-100 text-emerald-600"
                       : notification.type === "opportunity"
                         ? "bg-blue-100 text-blue-600"
@@ -91,7 +89,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
                           : notification.type === "security"
                             ? "bg-red-100 text-red-600"
                             : "bg-zinc-100 text-zinc-600"
-                  }`}
+                    }`}
                 >
                   {notification.type === "earning" ? (
                     <DollarSign className="h-4 w-4" />

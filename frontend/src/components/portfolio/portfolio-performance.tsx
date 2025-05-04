@@ -1,4 +1,4 @@
-"use client"
+
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts"
 
 interface PortfolioPerformanceProps {

@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useMemo, useState } from "react"
 import { format, subDays, subMonths } from "date-fns"

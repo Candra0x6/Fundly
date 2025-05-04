@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState, useEffect } from "react"
 import { RegistrationLayout } from "@/components/msme-registration/registration-layout"

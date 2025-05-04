@@ -82,6 +82,11 @@
       "source": ["frontend/dist"],
       "type": "assets"
     },
+    "networks": {
+      "ic": {
+        "providers": ["https://ic0.app"]
+      }
+    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "type": "custom",

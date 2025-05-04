@@ -1,4 +1,4 @@
-"use client"
+
 
 import { Save } from "lucide-react"
 import { Button } from "@/components/ui/button"

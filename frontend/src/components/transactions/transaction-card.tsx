@@ -1,4 +1,4 @@
-"use client"
+
 
 import { format } from "date-fns"
 import { ArrowLeftRight, ArrowRight, DollarSign, Send } from "lucide-react"
