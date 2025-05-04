@@ -22,73 +22,7 @@ import VerificationStep from "../verification-step";
 import InvestmentStep from "../investment-step";
 
 export default function HowItWorks() {
-  const [activeTab, setActiveTab] = useState("msmes");
 
-  const msmeSteps = [
-    {
-      icon: FileText,
-      title: "Apply",
-      description:
-        "Complete your business profile and funding application with details about your MSME, revenue history, and growth plans.",
-    },
-    {
-      icon: Upload,
-      title: "Verification",
-      description:
-        "Upload financial documents and verification materials that will be securely stored on IPFS for investor review.",
-    },
-    {
-      icon: Coins,
-      title: "Funding",
-      description:
-        "Once approved, your funding opportunity is listed on the marketplace where investors can purchase revenue-sharing NFTs.",
-    },
-    {
-      icon: BarChart3,
-      title: "Report Revenue",
-      description:
-        "Submit monthly revenue reports with supporting documentation to maintain transparency with your investors.",
-    },
-    {
-      icon: Wallet,
-      title: "Share Revenue",
-      description:
-        "The platform automatically calculates and distributes the agreed percentage of revenue to NFT holders in ImpactID tokens.",
-    },
-  ];
-
-  const investorSteps = [
-    {
-      icon: Building,
-      title: "Browse MSMEs",
-      description:
-        "Explore a diverse range of verified MSMEs seeking funding across different sectors, locations, and revenue stages.",
-    },
-    {
-      icon: PieChart,
-      title: "Analyze Opportunities",
-      description:
-        "Review business profiles, financial history, and projected returns to make informed investment decisions.",
-    },
-    {
-      icon: Wallet,
-      title: "Purchase NFTs",
-      description:
-        "Buy revenue-sharing NFTs representing your stake in the MSME's future revenue, with transparent terms and conditions.",
-    },
-    {
-      icon: BadgeCheck,
-      title: "Verify Reports",
-      description:
-        "Access monthly revenue reports and supporting documentation stored on IPFS to ensure transparency.",
-    },
-    {
-      icon: Coins,
-      title: "Receive Returns",
-      description:
-        "Automatically receive your share of the MSME's revenue in ImpactID tokens based on your NFT holdings.",
-    },
-  ];
 
   return (
     <section id="how-it-works" className="py-20  max-w-6xl mx-auto">
