@@ -7,7 +7,8 @@ function Navbar() {
   // TODO wallet identity
   const navigate = useNavigate()
 
-  const { principal, user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
+
 
   return (
     <header className={`border-b border-zinc-100 w-full z-50 bg-white fixed`}>
