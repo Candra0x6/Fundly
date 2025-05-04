@@ -5,25 +5,25 @@ import { Shield, Zap, BarChart3, Globe } from "lucide-react"
 
 const benefits = [
   {
-    icon: <Shield className="h-6 w-6 text-indigo-600" />,
+    icon: <Shield className="h-6 w-6 text-primary" />,
     title: "Secure & Transparent",
     description:
       "All transactions and revenue reports are recorded on the blockchain, ensuring complete transparency and security for both MSMEs and investors.",
   },
   {
-    icon: <Zap className="h-6 w-6 text-indigo-600" />,
+    icon: <Zap className="h-6 w-6 text-primary" />,
     title: "Efficient Funding",
     description:
       "MSMEs can access capital quickly without traditional loan requirements, while investors can diversify across multiple businesses with minimal friction.",
   },
   {
-    icon: <BarChart3 className="h-6 w-6 text-indigo-600" />,
+    icon: <BarChart3 className="h-6 w-6 text-primary" />,
     title: "Revenue-Based Returns",
     description:
       "Investors earn returns based on actual business performance, creating alignment between MSME success and investor outcomes.",
   },
   {
-    icon: <Globe className="h-6 w-6 text-indigo-600" />,
+    icon: <Globe className="h-6 w-6 text-primary" />,
     title: "Social Impact",
     description:
       "Support local economic development in underserved areas while earning returns, creating a sustainable model for impact investing.",
@@ -40,9 +40,9 @@ export default function TechnologyBenefits() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 mb-4"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 mb-4"
           >
-            <span className="text-sm text-indigo-700 tracking-wide font-medium">Platform Benefits</span>
+            <span className="text-sm text-emerald-700 tracking-wide font-medium">Platform Benefits</span>
           </motion.div>
 
           <motion.h2
@@ -52,7 +52,7 @@ export default function TechnologyBenefits() {
             viewport={{ once: true }}
             className="text-3xl md:text-4xl font-bold mb-4 text-slate-800"
           >
-            Why Use ImpactID?
+            Technology Benefits
           </motion.h2>
 
           <motion.p
@@ -75,9 +75,9 @@ export default function TechnologyBenefits() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-xl p-6 shadow-sm border border-slate-100"
+              className="bg-emerald-100/10 rounded-xl p-6 shadow-sm border border-primary/20"
             >
-              <div className="bg-indigo-50 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+              <div className="bg-emerald-50 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
                 {benefit.icon}
               </div>
               <h3 className="text-xl font-semibold mb-2 text-slate-800">{benefit.title}</h3>
