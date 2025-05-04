@@ -56,7 +56,12 @@ actor class Backend() {
     userProfiles.put(caller, user);
 
     return #ok(user);
-  }
+  };
+
+  public shared (_msg) func getUserByPrincipal(principal : Principal) : async ?UserProfile {
+    return userProfiles.get(principal);
+  };
+
   // Public function to get a user's profile
   // public query func getProfile(userPrincipal : Principal) : async ?UserProfile {
   //   return userProfiles.get(userPrincipal);
