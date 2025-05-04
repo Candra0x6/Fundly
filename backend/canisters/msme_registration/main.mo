@@ -202,6 +202,65 @@ actor MSMERegistration {
         };
     };
 
+    public shared (msg) func updatedDocumentVerified(
+        msmeId : Text,
+        documentId : Text,
+        verified : Bool,
+    ) : async Result.Result<(), Types.MSMEError> {
+        switch (msmes.get(msmeId)) {
+            case (null) { return #err(#NotFound) };
+            case (?msme) {
+
+                // Update the document
+                let updatedDocuments = Array.map<Types.Document, Types.Document>(
+                    msme.documents,
+                    func(doc : Types.Document) : Types.Document {
+                        if (doc.id == documentId) {
+                            return {
+                                id = doc.id;
+                                name = doc.name;
+                                docType = doc.docType;
+                                assetCanisterId = doc.assetCanisterId;
+                                assetId = doc.assetId;
+                                uploadDate = doc.uploadDate;
+                                verified = verified;
+                            };
+                        } else {
+                            return doc;
+                        };
+                    },
+                );
+
+                // Create update record
+                let updateRecord : Types.UpdateRecord = {
+                    updateTime = Time.now();
+                    updatedBy = msg.caller;
+                    updateType = #DocumentVerified;
+                    details = "Document verification status updated: " # documentId;
+                };
+
+                // Update the MSME record
+                let updatedMSME : Types.MSME = {
+                    id = msme.id;
+                    details = msme.details;
+                    contactInfo = msme.contactInfo;
+                    financialInfo = msme.financialInfo;
+                    overview = msme.overview;
+                    teamMembers = msme.teamMembers;
+                    documents = updatedDocuments;
+                    gallery = msme.gallery;
+                    roadmap = msme.roadmap;
+                    registrationDate = msme.registrationDate;
+                    verificationStatus = msme.verificationStatus;
+                    updateHistory = Array.append(msme.updateHistory, [updateRecord]);
+                };
+
+                msmes.put(msmeId, updatedMSME);
+                return #ok();
+            };
+        };
+    };
+
     // Add a document to an MSME
     public shared (msg) func addDocument(
         msmeId : Text,
