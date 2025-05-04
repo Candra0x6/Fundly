@@ -18,6 +18,7 @@ import { UserRole } from "@declarations/authentication/authentication.did"
 import { useNavigate } from "react-router-dom"
 import { Principal } from "@dfinity/principal"
 import { useTokenActor } from "@/utility/actors/tokenActor"
+import { useVerificationWorkflowActor } from "@/utility/actors/verificationWorkflow"
 // Define types for form data
 export interface MSMERegistrationFormData {
   businessDetails: BusinessDetailsFormData
@@ -30,6 +31,7 @@ export interface MSMERegistrationFormData {
 export default function MSMERegistrationPage() {
   const msmeActor = useMsmeActor()
   const tokenActor = useTokenActor()
+  const verificationActor = useVerificationWorkflowActor()
   const { principal } = useAuth()
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
@@ -229,6 +231,7 @@ export default function MSMERegistrationPage() {
           owner: principal as Principal,
           subaccount: []
         }, BigInt(formData.financialInformation.annualRevenue))
+
         toast.success("MSME registered successfully!");
         navigate("/msme-registration/documents");
       } else {
