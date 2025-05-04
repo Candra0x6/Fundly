@@ -41,9 +41,6 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   }
 
 
-  // Mock notifications
-
-
   return (
     <header className="bg-zinc-50 border-b border-zinc-200 sticky top-0 z-10">
       <div className="flex items-center justify-between px-4 py-3">

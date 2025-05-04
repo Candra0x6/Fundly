@@ -14,9 +14,9 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import logo from "@/assets/logo.svg"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLocation, useNavigate } from "react-router-dom"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/utility/use-auth-client"
 
 type DashboardSidebarProps = {
   navItems: {
@@ -34,9 +34,11 @@ export default function DashboardSidebar({ navItems }: DashboardSidebarProps) {
     return location.pathname === path
   }
 
+  const { isAuthenticated } = useAuth()
+
   return (
     <Sidebar variant="sidebar" collapsible="icon" className="w-full">
-      <SidebarHeader onClick={() => navigate("/")} className="border-b cursor-pointer border-zinc-200 py-[15px] flex items-center ">
+      <SidebarHeader onClick={() => navigate(isAuthenticated ? '/marketplace' : '/')} className="border-b cursor-pointer border-zinc-200 py-[15px] flex items-center ">
         <img src={logo} />
       </SidebarHeader>
 
