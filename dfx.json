@@ -34,7 +34,7 @@
     "revenue_reporting": {
       "main": "backend/canisters/revenue_reporting/main.mo",
       "type": "motoko",
-      "dependencies": ["token_canister", "msme_registration", "nft_canister"],
+      "dependencies": ["token_canister", "msme_registration", "nft_canister", "authentication"],
       "remote": {
         "id": {
           "ic": "ufxgi-4p777-77774-qaadq-cai"
@@ -62,6 +62,7 @@
     "verification_workflow": {
       "main": "backend/canisters/verification_workflow/main.mo",
       "type": "motoko",
+      "dependencies": ["authentication", "msme_registration"],
       "remote": {
         "id": {
           "ic": "vpyes-67777-77774-qaaeq-cai"
