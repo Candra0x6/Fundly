@@ -15,6 +15,7 @@ import { UserRole } from "@declarations/authentication/authentication.did"
 import { useAuth } from "@/utility/use-auth-client"
 import { useTokenActor } from "@/utility/actors/tokenActor"
 import { Principal } from "@dfinity/principal"
+import { useVerificationWorkflowActor } from "@/utility/actors/verificationWorkflow"
 interface RegisterFormProps {
   onSuccess: () => void
 }
@@ -31,7 +32,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   const { identity, authActor, principal } = useAuth()
   const tokenActor = useTokenActor()
-
+  const verificationActor = useVerificationWorkflowActor()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -80,6 +81,9 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
       }
       if (role === "admin") {
         await tokenActor.setMinter(principal as Principal)
+      }
+      if (role === "verifier") {
+        await verificationActor.addVerificationOfficer(principal as Principal, name, "MSME-Verifier")
       }
 
 
