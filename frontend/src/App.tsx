@@ -28,16 +28,15 @@ import InvestorPortfolioPage from "./pages/dashboard/user/portofolio/page";
 import AdminDashboardPage from "./pages/dashboard/admin/page";
 import { backend } from "@declarations/backend";
 import DocumentsPage from "./pages/msme-registration/documents/page";
-import VerificationDashboardPage from "./pages/dashboard/verify/page";
-import MSMEVerificationPage from "./pages/dashboard/verify/msme/[id]/page";
-import RevenueVerificationPage from "./pages/dashboard/verify/revenue/[id]/page";
 import EditMSMEProfilePage from "./pages/dashboard/msme/profile/page";
-import { VerificationWorkflowDashboard } from "./examples/VerificationWorkflowExamples";
 import MainLayout from "./components/layout/main-layout";
 import TransactionsPage from "./pages/dashboard/[role]/transactions/transactions-page";
 import { getSession } from "./utility/session";
 import InvestorProfilePage from "./pages/dashboard/user/profile/page";
 import ProfileEditPage from "./pages/dashboard/user/profile/edit/page";
+import VerificationDashboardPage from "./pages/dashboard/verifier/page";
+import RevenueVerificationPage from "./pages/dashboard/verifier/revenue/[id]/page";
+import MSMEVerificationPage from "./pages/dashboard/verifier/msme/[id]/page";
 const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -73,6 +72,9 @@ const AnimatedRoutes: React.FC = () => {
   ]
   const adminNavItems = [
     { path: "/dashboard/admin", label: "Dashboard", icon: Home },
+  ]
+  const verifyNavItems = [
+    { path: "/dashboard/verifier", label: "Dashboard", icon: Home },
   ]
   const user = getSession("user")
 
@@ -204,16 +206,7 @@ const AnimatedRoutes: React.FC = () => {
               }
             />
 
-            <Route
-              path="/m"
-              element={
-                <DashboardLayout navItems={msmeNavItems}>
-                  <ProtectedRoute isAuthenticated={isAuthenticated}>
-                    <VerificationWorkflowDashboard />
-                  </ProtectedRoute>
-                </DashboardLayout>
-              }
-            />
+
             {/* Dashboard Investor Pages */}
             <Route
               path="/dashboard/user"
@@ -249,27 +242,29 @@ const AnimatedRoutes: React.FC = () => {
             />
             {/* Verify Dashboard */}
             <Route
-              path="/dashboard/verify"
+              path="/dashboard/verifier"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <VerificationDashboardPage />
-                </ProtectedRoute>
+                <DashboardLayout navItems={verifyNavItems}>
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <VerificationDashboardPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
               }
             />
             <Route
-              path="/dashboard/verify/msme/:id"
+              path="/dashboard/verifier/:requestId/msme/:msmeId"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <MSMEVerificationPage />
-                </ProtectedRoute>
+                <DashboardLayout navItems={verifyNavItems}>
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <MSMEVerificationPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
               }
             />
             <Route
-              path="/dashboard/verify/revenue/:id"
+              path="/dashboard/verifier/revenue/:id"
               element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <RevenueVerificationPage />
-                </ProtectedRoute>
+                <RevenueVerificationPage />
               }
             />
             {/* Admin Pages */}
