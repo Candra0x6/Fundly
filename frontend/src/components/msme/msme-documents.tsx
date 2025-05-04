@@ -29,6 +29,7 @@ import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import { useAssetPreview } from "@/hooks/useAssetPreview"
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
+import { formatDate } from "@/utility/converts/formatDate"
 
 interface MSMEDocumentsProps {
   msme: MSME
@@ -98,7 +99,7 @@ export default function MSMEDocuments({ msme }: MSMEDocumentsProps) {
                         <span>{Object.keys(doc.docType)}</span>
                         <span className="mx-1">•</span>
                         <span className="mx-1">•</span>
-                        <span>Uploaded {new Date(Number(doc.uploadDate) / 1000000).toLocaleDateString()}</span>
+                        <span>Uploaded {formatDate(doc.uploadDate)}</span>
                       </div>
                     </div>
                   </div>
