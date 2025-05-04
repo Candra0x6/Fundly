@@ -14,12 +14,12 @@ import { CalendarIcon, DollarSign, Upload, Info } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { useRevenueReporting } from "@/hooks/useRevenueReporting"
 import { getSession } from "@/utility/session"
 import toast from "react-hot-toast"
 import { useFileUpload } from "@/hooks/useFileUpload"
 import { Document } from "@declarations/msme_registration/msme_registration.did"
 import { DocumentType } from "@declarations/nft_canister/nft_canister.did"
+import { useRevenueReporting } from "@/hooks/useRevenueReporting"
 
 interface RevenueReportingFormProps {
   onCancel: () => void
@@ -32,7 +32,7 @@ export default function RevenueReportingForm({ onCancel }: RevenueReportingFormP
   } = useFileUpload()
 
   const msmeId = getSession("msme_id")
-  const { reportRevenue, distributeRevenue } = useRevenueReporting()
+  const { reportRevenue } = useRevenueReporting()
   const [date, setDate] = useState<Date>()
   const [reportData, setReportData] = useState<{
     revenue: string,
@@ -106,18 +106,9 @@ export default function RevenueReportingForm({ onCancel }: RevenueReportingFormP
     // @ts-ignore
     if (result.ok) {
       toast.dismiss()
-      toast.success("Revenue reported successfully!")
-      toast.loading("Distribute Revenue...")
+      toast.success("Revenue reported successfully!, Please wait for verification")
       // @ts-ignore
-      const distributeResult = await distributeRevenue(result.ok)
-      // @ts-ignore
-      if (distributeResult.ok) {
-        toast.dismiss()
-        toast.success("Revenue distributed successfully!")
-      } else {
-        toast.dismiss()
-        toast.error("Failed to distribute revenue")
-      }
+
     } else {
       toast.dismiss()
       toast.error("Failed to report revenue")

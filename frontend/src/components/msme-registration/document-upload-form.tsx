@@ -17,7 +17,8 @@ import { DocumentViewer } from "./document-viewer"
 import { VerificationRequirementsDialog } from "./verification-requirements"
 import { getSession } from "@/utility/session"
 import { useNavigate } from "react-router-dom"
-
+import { useVerificationWorkflowActor } from "@/utility/actors/verificationWorkflow"
+import { DocumentType } from "@declarations/verification_workflow/verification_workflow.did"
 export interface Document {
   id: string
   assetId: string
@@ -34,7 +35,6 @@ export function DocumentUploadForm() {
   const [formData, setFormData] = useState<{ documents: Document[] }>({
     documents: [],
   })
-  const navigate = useNavigate()
 
   const data = formData.documents
   const updateData = (data: Document[]) => {
@@ -51,6 +51,7 @@ export function DocumentUploadForm() {
   const [submittedCount, setSubmittedCount] = useState<number>(0);
   const msmeActor = useMsmeActor()
   const storageActor = useStorageActor()
+  const verificationActor = useVerificationWorkflowActor()
   const session = getSession("msme_id")
   const msmeId = session;
   const requiredDocuments = [
@@ -242,7 +243,6 @@ export function DocumentUploadForm() {
     setSubmitting(true);
     setSubmittedCount(0);
 
-
     try {
       let successCount = 0;
 
@@ -266,6 +266,7 @@ export function DocumentUploadForm() {
                 : doc.type === "business_plan"
                   ? "BusinessPlan"
                   : "Other";
+
           // Call the addDocument function in the MSME canister
           const addDocResult = await msmeActor.addDocument(
             msmeId,
@@ -305,8 +306,60 @@ export function DocumentUploadForm() {
       }
 
       setSubmittedCount(successCount);
+
+      // Create verification request with properly mapped document types
+      const createVerificationRequestResult = await verificationActor.createVerificationRequest(
+        msmeId,
+        data.map(doc => {
+          // Map frontend document types to backend variant objects
+          let docTypeVariant;
+
+          switch (doc.type) {
+            case "business_registration":
+              docTypeVariant = { BusinessRegistration: null };
+              break;
+            case "financial_statements":
+              docTypeVariant = { FinancialStatement: null };
+              break;
+            case "tax_certificate":
+              docTypeVariant = { TaxDocument: null };
+              break;
+            case "business_plan":
+              docTypeVariant = { BusinessPlan: null };
+              break;
+            case "id_proof":
+              docTypeVariant = { Other: "ID_Proof" };
+              break;
+            case "bank_statements":
+              docTypeVariant = { Other: "Bank_Statements" };
+              break;
+            case "licenses":
+              docTypeVariant = { Other: "Licenses" };
+              break;
+            default:
+              docTypeVariant = { Other: doc.type };
+              break;
+          }
+
+          return {
+            id: doc.id,
+            name: doc.name,
+            docType: docTypeVariant,
+            uploadDate: BigInt(new Date(doc.dateUploaded).getTime()),
+            verified: false,
+            assetCanisterId: [],
+            assetId: doc.assetId,
+          };
+        })
+      );
+      console.log(createVerificationRequestResult);
+
       if (successCount > 0) {
-        toast.success(`Successfully submitted ${successCount} document(s)`);
+        if ('ok' in createVerificationRequestResult) {
+          toast.success(`Successfully submitted ${successCount} document(s)`);
+        } else {
+          toast.error(`Failed to create verification request: ${JSON.stringify(createVerificationRequestResult.err)}`);
+        }
       } else {
         toast.error("No documents were successfully submitted");
       }
@@ -321,7 +374,6 @@ export function DocumentUploadForm() {
       window.location.href = "/dashboard/msme"
     }
   }
-
   // Update the buttons to use DocumentViewer
   return (
     <div className="space-y-8">
@@ -361,7 +413,6 @@ export function DocumentUploadForm() {
       <div className="space-y-6">
         {requiredDocuments.map((doc) => {
           const uploadedDoc = getDocumentByType(doc.type);
-          console.log(uploadedDoc)
           const isUploading = uploading && uploadingType === doc.type;
           return (
             <div key={doc.type} className="border rounded-lg p-4">
