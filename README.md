@@ -72,8 +72,5 @@ Follow these beginner-friendly instructions to set up, run, and deploy Fundly lo
    ```
 3. Access your deployed application via the canister URL on the Internet Computer.
 
-## 🤝 Contributing
-
-We welcome contributions from the community! Please read our [Contributing Guide](./CONTRIBUTING.md) to learn how you can help improve Fundly.
 ---
 Built with ❤️ on the Internet Computer by the Fundly Team
