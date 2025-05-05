@@ -1,5 +1,6 @@
+![logo](https://github.com/user-attachments/assets/4dd3cbc3-267d-477a-9336-833b42927e89)
 
-![logo](https://github.com/user-attachments/assets/08f2a4e2-9184-4541-9974-4db88beeacba)
+
 
 # Fundly: Decentralized Funding for MSMEs
 
