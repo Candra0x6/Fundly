@@ -1,8 +1,8 @@
-# ImpactInvest Platform Documentation
+# Fundly Platform Documentation
 
 ## Overview
 
-The ImpactInvest platform is a decentralized application built on the Internet Computer Protocol (ICP) that connects MSMEs (Micro, Small, and Medium Enterprises) with investors through revenue-sharing NFTs. The platform enables MSMEs to tokenize future revenue streams and allows investors to purchase these tokens, creating a new funding mechanism for small businesses.
+The Fundly platform is a decentralized application built on the Internet Computer Protocol (ICP) that connects MSMEs (Micro, Small, and Medium Enterprises) with investors through revenue-sharing NFTs. The platform enables MSMEs to tokenize future revenue streams and allows investors to purchase these tokens, creating a new funding mechanism for small businesses.
 
 ## Core Features
 
