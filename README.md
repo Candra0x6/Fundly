@@ -1,23 +1,79 @@
-# Who am I?
+# Fundly: Decentralized Funding for MSMEs
 
-Who am I? demonstrates how entities on the Internet Computer are identified. Every entity, such as a user or canister smart contract, has a principal identifier. Principals can be used for identification and authentication. Who am I? uses Internet Identity (II) for user authentication, then displays the principal identifier associated with that Internet Identity on the user interface.
+[![Motoko](https://img.shields.io/badge/Language-Motoko-orange.svg)](https://sdk.dfinity.org/docs/language-guide/motoko.html)
+[![DFINITY](https://img.shields.io/badge/Platform-DFINITY-purple.svg)](https://dfinity.org/)
 
-This application's logic is written in [Motoko](https://internetcomputer.org/docs/motoko/main/getting-started/motoko-introduction), a programming language designed specifically for developing canisters on ICP.
+Welcome to **Fundly**, a revolutionary platform built on the Internet Computer (ICP) that empowers Micro, Small, and Medium Enterprises (MSMEs) by connecting them with investors through innovative blockchain technology. Our mission is to democratize access to funding and foster economic growth by leveraging the power of decentralized finance (DeFi).
 
-## Deploying from ICP Ninja
+Fundly introduces a unique model of revenue-sharing NFTs, allowing MSMEs to tokenize future revenue streams and offer them to investors as a form of non-debt financing. This project matters because it addresses the critical funding gap faced by MSMEs worldwide, providing a transparent, secure, and efficient funding mechanism.
 
-When viewing this project in ICP Ninja, you can deploy it directly to the mainnet for free by clicking "Deploy" in the upper right corner. Open this project in ICP Ninja:
+## 🌟 Key Features
 
-[![](https://icp.ninja/assets/open.svg)](https://icp.ninja/i?url=https://github.com/dfinity/examples/motoko/who_am_i)
+- **Revenue-Sharing NFTs**: MSMEs can mint NFTs representing a percentage of future revenue, enabling investors to earn returns based on business performance.
+- **MSME Verification**: A robust verification workflow ensures trust by validating business legitimacy through document submission and review.
+- **Revenue Reporting**: Secure and transparent reporting of revenue data for accurate distribution to NFT holders.
+- **Decentralized Architecture**: Built on the Internet Computer using Motoko, ensuring scalability, security, and decentralization.
+- **User-Friendly Interface**: Accessible platform for both MSMEs and investors to interact with canisters and manage assets.
 
-## Project structure
+## 🚀 Technologies Used
 
-The `/backend` folder contains the Motoko canister, `app.mo`. The `/frontend` folder contains web assets for the application's user interface. The user interface is written using the React framework. Edit the `mops.toml` file to add [Motoko dependencies](https://mops.one/) to the project.
+- **Motoko**: The programming language optimized for the Internet Computer, used to develop our smart contracts (canisters).
+- **DFINITY Internet Computer (ICP)**: The blockchain platform hosting our decentralized application, providing scalability and low-cost transactions.
+- **Canisters**: Smart contracts on ICP that manage MSME registration, verification, revenue reporting, asset storage, and NFT functionality.
+- **ICRC-7 Standard**: Extended for our revenue-sharing NFTs to include custom metadata like revenue share percentages.
 
-## Build and deploy from the command-line
+## 📚 Documentation
 
-To migrate your ICP Ninja project off of the web browser and develop it locally, follow these steps. These steps are necessary if you want to deploy this project for long-term, production use on the mainnet.
+Dive deeper into Fundly with our comprehensive documentation:
+- [Architecture Overview](./docs/architecture.md)
+- [Canister API Reference](./docs/canister-api.md)
+- [MSME Verification Process](./docs/concepts/msme-verification.md)
+- [Revenue-Sharing NFTs Explained](./docs/concepts/revenue-sharing-nfts.md)
+- [Revenue Reporting Guide](./docs/tutorials/revenue-reporting-guide.md)
+- [Canister Documentation](./docs/canisters/)
 
-### 1. Download your project from ICP Ninja using the 'Download files' button on the upper left corner under the pink ninja star icon.
+## 🛠️ Getting Started
 
-### 2. Open the `BUILD.md` file for further instructions.
+Follow these beginner-friendly instructions to set up, run, and deploy Fundly locally or on the Internet Computer.
+
+### Prerequisites
+- **DFX SDK**: Install the DFINITY Canister SDK by following the [official guide](https://sdk.dfinity.org/docs/quickstart/quickstart-intro.html).
+- **Node.js**: Required for frontend development (if applicable).
+- **Git**: To clone the repository.
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/candra0x6/fundly.git
+   cd fundly
+   ```
+2. Install dependencies (if a frontend is included):
+   ```bash
+   npm install
+   ```
+
+### Running Locally
+1. Start the local Internet Computer replica:
+   ```bash
+   dfx start --background
+   ```
+2. Deploy the canisters locally:
+   ```bash
+   dfx deploy
+   ```
+3. Access the platform through the local URL provided by `dfx` (typically `http://localhost:8000/?canisterId=<your-canister-id>`).
+
+### Deploying to ICP
+1. Ensure you have cycles in your wallet to pay for deployment:
+   - Convert ICP to cycles using the DFINITY dashboard or CLI.
+2. Deploy to the mainnet:
+   ```bash
+   dfx deploy --network ic
+   ```
+3. Access your deployed application via the canister URL on the Internet Computer.
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please read our [Contributing Guide](./CONTRIBUTING.md) to learn how you can help improve Fundly.
+---
+Built with ❤️ on the Internet Computer by the Fundly Team
