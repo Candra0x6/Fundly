@@ -105,7 +105,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     <div className="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold mb-2">Create an account</h1>
-        <p className="text-zinc-500">Join Fundify to start investing or raising funds</p>
+        <p className="text-zinc-500">Join Fundly to start investing or raising funds</p>
 
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">

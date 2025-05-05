@@ -352,7 +352,6 @@ export function DocumentUploadForm() {
           };
         })
       );
-      console.log(createVerificationRequestResult);
 
       if (successCount > 0) {
         if ('ok' in createVerificationRequestResult) {

@@ -12,7 +12,7 @@ interface HeroGeometricProps {
 }
 
 export default function HeroGeometric({
-  badge = "ImpactID Platform",
+  badge = "Fundly Platform",
   title1 = "Empowering MSMEs",
   title2 = "Through NFT Investments",
 }: HeroGeometricProps) {

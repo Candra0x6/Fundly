@@ -45,7 +45,7 @@ export default function DashboardLayout({ children, navItems }: DashboardLayoutP
           <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           <main className="p-4 md:p-6 w-full">{children}</main>
           <footer className="border-t border-zinc-200 py-4 px-6 text-sm text-zinc-500 text-center">
-            © 2025 Fundify. All rights reserved.
+            © 2025 Fundly. All rights reserved.
           </footer>
         </div>
       </div>

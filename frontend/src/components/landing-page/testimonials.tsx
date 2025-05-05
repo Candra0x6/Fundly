@@ -8,7 +8,7 @@ import Profile from "@/assets/profile-pic.jpeg"
 const testimonials = [
   {
     quote:
-      "ImpactID has transformed my small restaurant business. The revenue-sharing model allowed me to expand without taking on traditional debt, and the investors have become our biggest advocates.",
+      "Fundly has transformed my small restaurant business. The revenue-sharing model allowed me to expand without taking on traditional debt, and the investors have become our biggest advocates.",
     author: "Maria Sanchez",
     role: "Restaurant Owner, Mexico City",
     avatar: "/placeholder.svg?height=80&width=80",
@@ -26,7 +26,7 @@ const testimonials = [
   },
   {
     quote:
-      "Our textile cooperative was struggling to secure traditional financing. Through ImpactID, we not only raised capital but connected with customers globally who value our sustainable practices.",
+      "Our textile cooperative was struggling to secure traditional financing. Through Fundly, we not only raised capital but connected with customers globally who value our sustainable practices.",
     author: "Priya Sharma",
     role: "Textile Cooperative Leader, India",
     avatar: "/placeholder.svg?height=80&width=80",
@@ -44,7 +44,7 @@ const testimonials = [
   },
   {
     quote:
-      "Our coffee farm has thrived with ImpactID funding. The monthly revenue sharing is manageable, and we've built relationships with investors who've become brand ambassadors for our products worldwide.",
+      "Our coffee farm has thrived with Fundly funding. The monthly revenue sharing is manageable, and we've built relationships with investors who've become brand ambassadors for our products worldwide.",
     author: "Carlos Mendoza",
     role: "Coffee Producer, Colombia",
     avatar: "/placeholder.svg?height=80&width=80",

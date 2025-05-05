@@ -30,7 +30,7 @@ export default function FinalCTA() {
 
               <p className="text-slate-600 mb-8 text-lg">
                 Whether you're an MSME looking for funding or an investor
-                seeking impactful returns, ImpactID connects you to
+                seeking impactful returns, Fundly connects you to
                 opportunities that create real-world change.
               </p>
 

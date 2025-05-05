@@ -21,11 +21,7 @@ export default function InternetIdentityPage() {
     try {
       // Simulate Internet Identity authentication
       await login()
-      // In a real app, you would integrate with Internet Identity here
-      // This would typically involve redirecting to the II service
-      // and handling the callback with authentication data
 
-      // For now, we'll just redirect to the dashboard
       navigate("/auth")
     } catch (err) {
       console.error("Internet Identity authentication failed", err)
@@ -49,7 +45,7 @@ export default function InternetIdentityPage() {
           >
             <h1 className="text-3xl md:text-4xl font-bold mb-4">Internet Identity Authentication</h1>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
-              Secure, anonymous, and convenient. Internet Identity is the recommended authentication method for Fundify.
+              Secure, anonymous, and convenient. Internet Identity is the recommended authentication method for Fundly.
             </p>
           </motion.div>
 
@@ -141,7 +137,7 @@ export default function InternetIdentityPage() {
                       <div className="text-center mb-6">
                         <h3 className="text-lg font-semibold mb-2">Sign in with Internet Identity</h3>
                         <p className="text-zinc-600 text-sm">
-                          Use your existing Internet Identity to securely authenticate with Fundify.
+                          Use your existing Internet Identity to securely authenticate with Fundly.
                         </p>
                       </div>
 
@@ -190,7 +186,7 @@ export default function InternetIdentityPage() {
                       <div className="text-center mb-6">
                         <h3 className="text-lg font-semibold mb-2">Create an Internet Identity</h3>
                         <p className="text-zinc-600 text-sm">
-                          Follow these steps to create your Internet Identity and connect with Fundify.
+                          Follow these steps to create your Internet Identity and connect with Fundly.
                         </p>
                       </div>
 

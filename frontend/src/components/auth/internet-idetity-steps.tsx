@@ -17,7 +17,7 @@ export default function InternetIdentitySteps() {
       description: "Set up a recovery method such as a seed phrase or security key to protect your identity.",
     },
     {
-      title: "Return to Fundify",
+      title: "Return to Fundly",
       description: "Once your Internet Identity is created, return to this page and click 'I have Internet Identity'.",
     },
   ]
