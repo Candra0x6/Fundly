@@ -1,3 +1,6 @@
+
+![logo](https://github.com/user-attachments/assets/08f2a4e2-9184-4541-9974-4db88beeacba)
+
 # Fundly: Decentralized Funding for MSMEs
 
 [![Motoko](https://img.shields.io/badge/Language-Motoko-orange.svg)](https://sdk.dfinity.org/docs/language-guide/motoko.html)
