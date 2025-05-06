@@ -64,11 +64,15 @@ Follow these beginner-friendly instructions to set up, run, and deploy Fundly lo
    ```bash
    dfx start --background
    ```
-2. Deploy the canisters locally:
+2. Generate canisters type:
+   ```bash
+   dfx generate
+   ```
+3. Deploy the canisters locally:
    ```bash
    dfx deploy
    ```
-3. Access the platform through the local URL provided by `dfx` (typically `http://localhost:8000/?canisterId=<your-canister-id>`).
+4. Access the platform through the local URL provided by `dfx` (typically `http://localhost:8000/?canisterId=<your-canister-id>`).
 
 ### Deploying to ICP
 1. Ensure you have cycles in your wallet to pay for deployment:
