@@ -25,8 +25,11 @@ Fundly introduces a unique model of revenue-sharing NFTs, allowing MSMEs to toke
 - **DFINITY Internet Computer (ICP)**: The blockchain platform hosting our decentralized application, providing scalability and low-cost transactions.
 - **Canisters**: Smart contracts on ICP that manage MSME registration, verification, revenue reporting, asset storage, and NFT functionality.
 - **ICRC-7 Standard**: Extended for our revenue-sharing NFTs to include custom metadata like revenue share percentages.
+- **ICRC-1/ICRC-2**: Secure compliant $FND tokens for platform transactions
 
 ## 📚 Documentation
+**Notion Documentation**
+https://held-field-89d.notion.site/Fundly-1d048a1396978019aa97f6d79e4f3dee
 
 Dive deeper into Fundly with our comprehensive documentation:
 - [Architecture Overview](./docs/architecture.md)
