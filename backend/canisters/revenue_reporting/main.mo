@@ -139,7 +139,9 @@ actor RevenueReporting {
                 msmeToRevenues.put(msmeId, [idText]);
             };
             case (?existingIds) {
-                msmeToRevenues.put(msmeId, Array.append(existingIds, [idText]));
+                let buffer = Buffer.fromArray<Text>(existingIds);
+                buffer.add(idText);
+                msmeToRevenues.put(msmeId, Buffer.toArray(buffer));
             };
         };
 
@@ -422,14 +424,25 @@ actor RevenueReporting {
     };
 
     // Get all transactions where owner is the recipient
-    public query func getTransactionsByOwner(owner : Principal) : async [DistributionTx] {
-        let buffer = Buffer.Buffer<DistributionTx>(0);
+    public query func getTransactionsByOwner(owner : Principal, limit : ?Nat) : async [DistributionTx] {
+        let maxLimit = 100; // Maximum transactions per call
+        let actualLimit = switch (limit) {
+            case (?l) { if (l > maxLimit) { maxLimit } else { l } };
+            case null { maxLimit };
+        };
+        
+        let buffer = Buffer.Buffer<DistributionTx>(actualLimit);
+        var count = 0;
 
         // Iterate through all revenues to find transactions for this owner
-        for ((_, revenue) in revenues.entries()) {
+        label outer for ((_, revenue) in revenues.entries()) {
             for (tx in revenue.distributionTxs.vals()) {
                 if (tx.recipient.owner == owner) {
+                    if (count >= actualLimit) {
+                        break outer;
+                    };
                     buffer.add(tx);
+                    count += 1;
                 };
             };
         };
@@ -437,17 +450,28 @@ actor RevenueReporting {
         return Buffer.toArray(buffer);
     };
 
-    public query func getTransactionsWithRevenueByOwner(owner : Principal) : async [TransactionWithRevenue] {
-        let buffer = Buffer.Buffer<TransactionWithRevenue>(0);
+    public query func getTransactionsWithRevenueByOwner(owner : Principal, limit : ?Nat) : async [TransactionWithRevenue] {
+        let maxLimit = 100; // Maximum transactions per call
+        let actualLimit = switch (limit) {
+            case (?l) { if (l > maxLimit) { maxLimit } else { l } };
+            case null { maxLimit };
+        };
+        
+        let buffer = Buffer.Buffer<TransactionWithRevenue>(actualLimit);
+        var count = 0;
 
         // Iterate through all revenues to find transactions for this owner
-        for ((id, revenue) in revenues.entries()) {
+        label outer for ((id, revenue) in revenues.entries()) {
             for (tx in revenue.distributionTxs.vals()) {
                 if (tx.recipient.owner == owner) {
+                    if (count >= actualLimit) {
+                        break outer;
+                    };
                     buffer.add({
                         transaction = tx;
                         revenue = revenue;
                     });
+                    count += 1;
                 };
             };
         };

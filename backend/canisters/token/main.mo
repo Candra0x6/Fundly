@@ -509,12 +509,21 @@ actor FNDToken {
         return #ok(txid);
     };
 
-    // Get transaction by ID
-    public query func getTransationByOwner(owner : Principal) : async [TokenTx] {
-        let buffer = Buffer.Buffer<TokenTx>(transactions.size());
+    // Get transaction by owner with pagination support
+    public query func getTransactionByOwner(owner : Principal, limit : ?Nat) : async [TokenTx] {
+        let maxLimit = 100; // Maximum transactions per call
+        let actualLimit = switch (limit) {
+            case (?l) { if (l > maxLimit) { maxLimit } else { l } };
+            case null { maxLimit };
+        };
+        
+        let buffer = Buffer.Buffer<TokenTx>(if (actualLimit < 100) { actualLimit } else { 100 });
+        var count = 0;
+        
         for ((_, transaction) in transactions.entries()) {
-            if (transaction.from.owner == owner) {
+            if (transaction.from.owner == owner and count < actualLimit) {
                 buffer.add(transaction);
+                count += 1;
             };
         };
         return Buffer.toArray(buffer);

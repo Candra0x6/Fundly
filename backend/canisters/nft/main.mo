@@ -373,8 +373,9 @@ actor RevenueShareNFT {
                 // Add to distribution records
                 switch (distributionRecords.get(tokenId)) {
                     case (?records) {
-                        let newRecords = Array.append(records, [record]);
-                        distributionRecords.put(tokenId, newRecords);
+                        let buffer = Buffer.fromArray<DistributionRecord>(records);
+                        buffer.add(record);
+                        distributionRecords.put(tokenId, Buffer.toArray(buffer));
                     };
                     case null {
                         distributionRecords.put(tokenId, [record]);
@@ -434,8 +435,9 @@ actor RevenueShareNFT {
     private func _addTokenToOwner(owner : Principal, tokenId : TokenId) {
         switch (ownerships.get(owner)) {
             case (?tokenIds) {
-                let newTokenIds = Array.append(tokenIds, [tokenId]);
-                ownerships.put(owner, newTokenIds);
+                let buffer = Buffer.fromArray<TokenId>(tokenIds);
+                buffer.add(tokenId);
+                ownerships.put(owner, Buffer.toArray(buffer));
             };
             case null {
                 ownerships.put(owner, [tokenId]);
@@ -456,8 +458,9 @@ actor RevenueShareNFT {
     private func _addTokenToMSME(msmeId : Text, tokenId : TokenId) {
         switch (msmeToTokens.get(msmeId)) {
             case (?tokenIds) {
-                let newTokenIds = Array.append(tokenIds, [tokenId]);
-                msmeToTokens.put(msmeId, newTokenIds);
+                let buffer = Buffer.fromArray<TokenId>(tokenIds);
+                buffer.add(tokenId);
+                msmeToTokens.put(msmeId, Buffer.toArray(buffer));
             };
             case null {
                 msmeToTokens.put(msmeId, [tokenId]);
@@ -596,12 +599,8 @@ actor RevenueShareNFT {
     }] {
         let buffer = Buffer.Buffer<{ tokenId : TokenId; price : Nat; nft : NFT; msmeData : ?Types.MSME }>(listings.size());
 
-        // Debug: print listings size
-        Debug.print("Listings size: " # debug_show (listings.size()));
-
         // If there are no listings, return empty array early
         if (listings.size() == 0) {
-            Debug.print("No listings found");
             return [];
         };
 
@@ -611,37 +610,25 @@ actor RevenueShareNFT {
         for ((tokenId, price) in listings.entries()) {
             switch (tokens.get(tokenId)) {
                 case (?token) {
-                    Debug.print("Found token: " # debug_show (tokenId));
                     msmeIds.put(token.metadata.msmeId, true);
                 };
-                case null {
-                    Debug.print("Token not found for listing: " # debug_show (tokenId));
-                };
+                case null {};
             };
         };
-
-        // Debug: print unique MSME IDs
-        Debug.print("Unique MSME IDs: " # debug_show (msmeIds.size()));
 
         // Fetch all MSME data in advance
         let msmeDataMap = HashMap.HashMap<Text, Types.MSME>(32, Text.equal, Text.hash);
 
         for ((msmeId, _) in msmeIds.entries()) {
-            Debug.print("Fetching MSME data for: " # msmeId);
             try {
                 let result = await MSMECanister.getMSME(msmeId);
                 switch (result) {
                     case (#ok(msmeData)) {
-                        Debug.print("MSME data found for: " # msmeId);
                         msmeDataMap.put(msmeId, msmeData);
                     };
-                    case (#err(error)) {
-                        Debug.print("MSME not found: " # msmeId # ", error: " # debug_show (error));
-                    };
+                    case (#err(_)) {};
                 };
-            } catch (e) {
-                Debug.print("Error calling MSME canister: " # Error.message(e));
-            };
+            } catch (_) {};
         };
 
         // Combine listing info, NFT details, and MSME data
@@ -655,15 +642,11 @@ actor RevenueShareNFT {
                         nft = token;
                         msmeData = msmeData;
                     });
-                    Debug.print("Added listing to result: " # debug_show (tokenId));
                 };
-                case null {
-                    Debug.print("Skipping listing with missing token: " # debug_show (tokenId));
-                };
+                case null {};
             };
         };
 
-        Debug.print("Final buffer size: " # debug_show (buffer.size()));
         return Buffer.toArray(buffer);
     };
     // Buy NFT with token transfer
@@ -776,13 +759,22 @@ actor RevenueShareNFT {
         };
     };
 
-    public func getTransactionsByOwner(owner : Principal) : async [{
+    public func getTransactionsByOwner(owner : Principal, limit : ?Nat) : async [{
         transaction : NftTx;
     }] {
-        let buffer = Buffer.Buffer<{ transaction : NftTx }>(transactions.size());
+        let maxLimit = 100; // Maximum transactions per call
+        let actualLimit = switch (limit) {
+            case (?l) { if (l > maxLimit) { maxLimit } else { l } };
+            case null { maxLimit };
+        };
+        
+        let buffer = Buffer.Buffer<{ transaction : NftTx }>(actualLimit);
+        var count = 0;
+        
         for ((_, transaction) in transactions.entries()) {
-            if (transaction.from.owner == owner) {
+            if (transaction.from.owner == owner and count < actualLimit) {
                 buffer.add({ transaction = transaction });
+                count += 1;
             };
         };
         return Buffer.toArray(buffer);

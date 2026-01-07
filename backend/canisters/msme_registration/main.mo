@@ -169,6 +169,9 @@ actor MSMERegistration {
                 };
 
                 // Update the MSME record with provided fields
+                let historyBuffer = Buffer.fromArray<Types.UpdateRecord>(msme.updateHistory);
+                historyBuffer.add(updateRecord);
+
                 let updatedMSME : Types.MSME = {
                     id = msme.id;
                     details = args.details;
@@ -181,7 +184,7 @@ actor MSMERegistration {
                     roadmap = args.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
-                    updateHistory = Array.append(msme.updateHistory, [updateRecord]);
+                    updateHistory = Buffer.toArray(historyBuffer);
                 };
 
                 // Update category index if changed
@@ -240,6 +243,9 @@ actor MSMERegistration {
                 };
 
                 // Update the MSME record
+                let historyBuffer = Buffer.fromArray<Types.UpdateRecord>(msme.updateHistory);
+                historyBuffer.add(updateRecord);
+
                 let updatedMSME : Types.MSME = {
                     id = msme.id;
                     details = msme.details;
@@ -252,7 +258,7 @@ actor MSMERegistration {
                     roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
-                    updateHistory = Array.append(msme.updateHistory, [updateRecord]);
+                    updateHistory = Buffer.toArray(historyBuffer);
                 };
 
                 msmes.put(msmeId, updatedMSME);
@@ -293,9 +299,11 @@ actor MSMERegistration {
                     details = "Document added: " # name;
                 };
 
-                let updatedDocuments = Array.append(msme.documents, [document]);
+                let documentsBuffer = Buffer.fromArray<Types.Document>(msme.documents);
+                documentsBuffer.add(document);
 
-                let updatedHistory = Array.append(msme.updateHistory, [updateRecord]);
+                let historyBuffer = Buffer.fromArray<Types.UpdateRecord>(msme.updateHistory);
+                historyBuffer.add(updateRecord);
 
                 let updatedMSME : Types.MSME = {
                     id = msme.id;
@@ -304,12 +312,12 @@ actor MSMERegistration {
                     financialInfo = msme.financialInfo;
                     overview = msme.overview;
                     teamMembers = msme.teamMembers;
-                    documents = updatedDocuments;
+                    documents = Buffer.toArray(documentsBuffer);
                     gallery = msme.gallery;
                     roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
-                    updateHistory = updatedHistory;
+                    updateHistory = Buffer.toArray(historyBuffer);
                 };
 
                 msmes.put(msmeId, updatedMSME);
@@ -346,6 +354,9 @@ actor MSMERegistration {
                     details = "Verification requested";
                 };
 
+                let historyBuffer = Buffer.fromArray<Types.UpdateRecord>(msme.updateHistory);
+                historyBuffer.add(updateRecord);
+
                 let updatedMSME : Types.MSME = {
                     id = msme.id;
                     details = msme.details;
@@ -358,7 +369,7 @@ actor MSMERegistration {
                     roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = #UnderReview;
-                    updateHistory = Array.append(msme.updateHistory, [updateRecord]);
+                    updateHistory = Buffer.toArray(historyBuffer);
                 };
 
                 msmes.put(msmeId, updatedMSME);
@@ -389,6 +400,9 @@ actor MSMERegistration {
                     details = "Verification status updated";
                 };
 
+                let historyBuffer = Buffer.fromArray<Types.UpdateRecord>(msme.updateHistory);
+                historyBuffer.add(updateRecord);
+
                 let updatedMSME : Types.MSME = {
                     id = msme.id;
                     details = msme.details;
@@ -401,7 +415,7 @@ actor MSMERegistration {
                     roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = status;
-                    updateHistory = Array.append(msme.updateHistory, [updateRecord]);
+                    updateHistory = Buffer.toArray(historyBuffer);
                 };
 
                 msmes.put(msmeId, updatedMSME);
@@ -428,6 +442,9 @@ actor MSMERegistration {
                     details = "Ownership transferred to: " # Principal.toText(newOwner);
                 };
 
+                let historyBuffer = Buffer.fromArray<Types.UpdateRecord>(msme.updateHistory);
+                historyBuffer.add(updateRecord);
+
                 let updatedMSME : Types.MSME = {
                     id = msme.id;
                     details = msme.details;
@@ -440,7 +457,7 @@ actor MSMERegistration {
                     roadmap = msme.roadmap;
                     registrationDate = msme.registrationDate;
                     verificationStatus = msme.verificationStatus;
-                    updateHistory = Array.append(msme.updateHistory, [updateRecord]);
+                    updateHistory = Buffer.toArray(historyBuffer);
                 };
 
                 // Update owner indices
@@ -520,7 +537,9 @@ actor MSMERegistration {
                 ownerToMSMEs.put(owner, [msmeId]);
             };
             case (?existingIds) {
-                ownerToMSMEs.put(owner, Array.append(existingIds, [msmeId]));
+                let buffer = Buffer.fromArray<Text>(existingIds);
+                buffer.add(msmeId);
+                ownerToMSMEs.put(owner, Buffer.toArray(buffer));
             };
         };
     };
@@ -546,7 +565,9 @@ actor MSMERegistration {
                 categoryToMSMEs.put(category, [msmeId]);
             };
             case (?existingIds) {
-                categoryToMSMEs.put(category, Array.append(existingIds, [msmeId]));
+                let buffer = Buffer.fromArray<Text>(existingIds);
+                buffer.add(msmeId);
+                categoryToMSMEs.put(category, Buffer.toArray(buffer));
             };
         };
     };
@@ -572,7 +593,9 @@ actor MSMERegistration {
                 locationToMSMEs.put(location, [msmeId]);
             };
             case (?existingIds) {
-                locationToMSMEs.put(location, Array.append(existingIds, [msmeId]));
+                let buffer = Buffer.fromArray<Text>(existingIds);
+                buffer.add(msmeId);
+                locationToMSMEs.put(location, Buffer.toArray(buffer));
             };
         };
     };
