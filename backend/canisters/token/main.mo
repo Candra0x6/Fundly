@@ -509,15 +509,15 @@ actor FNDToken {
         return #ok(txid);
     };
 
-    // Get transaction by ID with pagination support
-    public query func getTransationByOwner(owner : Principal, limit : ?Nat) : async [TokenTx] {
+    // Get transaction by owner with pagination support
+    public query func getTransactionByOwner(owner : Principal, limit : ?Nat) : async [TokenTx] {
         let maxLimit = 100; // Maximum transactions per call
         let actualLimit = switch (limit) {
             case (?l) { if (l > maxLimit) { maxLimit } else { l } };
             case null { maxLimit };
         };
         
-        let buffer = Buffer.Buffer<TokenTx>(actualLimit);
+        let buffer = Buffer.Buffer<TokenTx>(if (actualLimit < 100) { actualLimit } else { 100 });
         var count = 0;
         
         for ((_, transaction) in transactions.entries()) {

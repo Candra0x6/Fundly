@@ -132,7 +132,7 @@ export default function TransactionsPage() {
   useEffect(() => {
     const fetchTransactions = async () => {
       // Fetch transactions with pagination limit (100 max)
-      const tokenTransactions = await tokenActor.getTransationByOwner(principal as Principal, [100])
+      const tokenTransactions = await tokenActor.getTransactionByOwner(principal as Principal, [100])
       const nftTransactions = await nftActor.getTransactionsByOwner(principal as Principal, [100])
       const revenueTransactions = await revenueActor.getTransactionsByOwner(principal as Principal, [100])
       // @ts-ignore

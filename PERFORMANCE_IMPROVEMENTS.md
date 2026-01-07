@@ -49,12 +49,12 @@ public func getTransactionsByOwner(owner : Principal, limit : ?Nat) : async [{
 ### 2. Token Canister (`backend/canisters/token/main.mo`)
 
 #### Transaction Query Pagination
-**Issue**: `getTransationByOwner()` [sic] could return unbounded results.
+**Issue**: `getTransactionByOwner()` could return unbounded results.
 
 **Solution**: Added optional `limit` parameter with max of 100 results per call.
 
 ```motoko
-public query func getTransationByOwner(owner : Principal, limit : ?Nat) : async [TokenTx]
+public query func getTransactionByOwner(owner : Principal, limit : ?Nat) : async [TokenTx]
 ```
 
 **Performance Impact**: 
