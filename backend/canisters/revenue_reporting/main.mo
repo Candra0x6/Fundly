@@ -139,7 +139,9 @@ actor RevenueReporting {
                 msmeToRevenues.put(msmeId, [idText]);
             };
             case (?existingIds) {
-                msmeToRevenues.put(msmeId, Array.append(existingIds, [idText]));
+                let buffer = Buffer.fromArray<Text>(existingIds);
+                buffer.add(idText);
+                msmeToRevenues.put(msmeId, Buffer.toArray(buffer));
             };
         };
 
