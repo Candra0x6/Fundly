@@ -759,13 +759,22 @@ actor RevenueShareNFT {
         };
     };
 
-    public func getTransactionsByOwner(owner : Principal) : async [{
+    public func getTransactionsByOwner(owner : Principal, limit : ?Nat) : async [{
         transaction : NftTx;
     }] {
-        let buffer = Buffer.Buffer<{ transaction : NftTx }>(transactions.size());
+        let maxLimit = 100; // Maximum transactions per call
+        let actualLimit = switch (limit) {
+            case (?l) { if (l > maxLimit) { maxLimit } else { l } };
+            case null { maxLimit };
+        };
+        
+        let buffer = Buffer.Buffer<{ transaction : NftTx }>(actualLimit);
+        var count = 0;
+        
         for ((_, transaction) in transactions.entries()) {
-            if (transaction.from.owner == owner) {
+            if (transaction.from.owner == owner and count < actualLimit) {
                 buffer.add({ transaction = transaction });
+                count += 1;
             };
         };
         return Buffer.toArray(buffer);
